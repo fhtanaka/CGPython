@@ -12,7 +12,6 @@ class Node:
     
     def __init__(self, terminal: bool,  operation: Operation, value = None) -> None:
         self.id = self.idCounter()
-        self.op = operation
         self.terminal = terminal
         self.value = value
         self.operation = operation
