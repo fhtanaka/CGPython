@@ -1,17 +1,16 @@
 import itertools
-from collections import namedtuple
 
 class Operation:
-    def __init__(self, arity: int, operation: function):
+    def __init__(self, arity: int, operation: callable):
         self.arity = arity
         self.func = operation
 
 class Node:
 
-    idC_cunter = itertools.count().__next__
+    id_counter = itertools.count().__next__
     
     def __init__(self, terminal: bool,  operation: Operation, value = None) -> None:
-        self.id = self.idCounter()
+        self.id = self.id_counter()
         self.terminal = terminal
         self.value = value
         self.operation = operation
