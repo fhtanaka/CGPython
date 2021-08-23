@@ -1,13 +1,8 @@
 import itertools
 
-class Operation:
-    def __init__(self, arity: int, operation: callable):
-        self.arity = arity
-        self.func = operation
 
 class Node:
-
-    id_counter = itertools.count().__next__
+    Node.id_counter = itertools.count().__next__
     
     def __init__(self, terminal: bool,  operation: Operation, value = None) -> None:
         self.id = self.id_counter()
