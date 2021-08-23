@@ -47,7 +47,7 @@ def test_get_node_value():
 
 def main():
     test_get_node_value()
-    print("If this message appears, there is on errors!! \o/")
+    print("If this message appears, there is no errors!! \o/")
 
 if __name__ == "__main__":
     main()

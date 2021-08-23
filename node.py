@@ -1,8 +1,9 @@
 import itertools
+from operation import Operation
 
 
 class Node:
-    Node.id_counter = itertools.count().__next__
+    id_counter = itertools.count().__next__
     
     def __init__(self, terminal: bool,  operation: Operation, value = None) -> None:
         self.id = self.id_counter()

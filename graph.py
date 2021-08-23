@@ -4,7 +4,7 @@ from node import Node
 from operation import Operation
 
 class Graph:
-    Graph.operations = []
+    operations = []
     
     def __init__(self):
         self.nodes: Dict[str, Node] = {}
