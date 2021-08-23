@@ -12,13 +12,8 @@ class Node:
         self.operation = operation
         self.inputs = [] # List of node_ids
     
-    def add_inputs(self, node_ids):
-        for id in node_ids:
-            self.inputs.append(id)
+    def add_inputs(self, node_ids: list) -> None:
+        self.inputs += node_ids
     
-    def remove_inputs(self, ids_to_remove):
-        new_inputs = []
-        for id in self.inputs:
-            if id not in ids_to_remove:
-                new_inputs.append(id)
-        self.inputs = new_inputs
+    def remove_inputs(self, ids_to_remove: list) -> None:
+        self.inputs = [i for i in self.inputs if i not in ids_to_remove]
