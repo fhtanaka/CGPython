@@ -1,22 +1,25 @@
 from typing import Dict
 import random
-from node import Node, Operation
+from node import Node
+from operation import Operation
 
 class Graph:
+    Graph.operations = []
+    
     def __init__(self):
-        self.operations = []
         self.nodes: Dict[str, Node] = {}
         self.columns = []
-
-    def add_operation(self, arity, func):
+        
+    @staticmethod
+    def add_operation(arity, func):
         op = Operation(arity, func)
-        self.operations.append(op)
+        Graph.operations.append(op)
     
     def initializate_graph(self, n_in, n_out, n_row, n_col):
         for i in range(n_col):
             col = []
             for j in range(n_row):
-                op = random.choice(self.operations)
+                op = random.choice(Graph.operations)
                 new_node = Node(False, op)
                 self.nodes[new_node.id] = new_node
                 col.append(new_node.id)
@@ -25,7 +28,7 @@ class Graph:
     # this function is mostly for testing purposes
     def _add_node(self, value = None, operation = None, terminal = False):
         if operation == None and value == None:
-            operation = random.choice(self.operations)
+            operation = random.choice(Graph.operations)
         new_node = Node(terminal, operation, value)
         self.nodes[new_node.id] = new_node
         return new_node.id
