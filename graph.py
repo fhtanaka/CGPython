@@ -60,23 +60,24 @@ class Graph:
             # for each node in the layer i
             for j in self.columns[i]:
                 current_node = self.nodes[j]
-#                 print("node", current_node.id, end=" ")
 
                 if current_node.active:
                     arity  = current_node.operation.arity
-#                     print("with arity", arity, end=" ")
                     
                     # pick n=arity nodes randomly
                     inodes_idlist = Graph.rng.choice(previous_cols, arity)
                     
                     # add to the list of inputs
                     current_node.add_inputs(inodes_idlist)
-#                     print("added inputs", current_node.inputs)
                     
                     # mark picked nodes as active
                     # (another option, we could process active nodes only)
                     for nodeid in inodes_idlist:
                         self.nodes[nodeid].active = True
+
+    def inputs(self, input_values):
+        for nodeid, value in zip(self.columns[0], input_values):
+            self.nodes[nodeid].value = value
 
     @staticmethod
     def add_operation(arity, func, string):
@@ -119,5 +120,13 @@ class Graph:
         result = node.operation(*inputs)
         node.value = result # this may help avoid recalculating nodes in the same execution
                             # remember to make this value null when reseting the graph
+        return node.value
         
-        return result
+    def get_value(self, node_id):
+        node = self.nodes[node_id]
+        if node.value is not None:
+            return node.value
+        
+        node.value = node.operation(*[self.get_value(x) for x in node.inputs])
+        
+        return node.value
