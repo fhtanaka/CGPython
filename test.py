@@ -21,9 +21,9 @@ invert_op = Operation(1, invert, "-x")
 def test_get_node_value():
     g = Graph(0, 0, 0 ,0 , 0)
 
-    five_node = g._add_node(5, terminal=True)
-    ten_node = g._add_node(10, terminal=True)
-    zero_node = g._add_node(0, terminal=True)
+    five_node = g._add_node(5, col_num=0)
+    ten_node = g._add_node(10, col_num=0)
+    zero_node = g._add_node(0, col_num=0)
 
     addition_node = g._add_node(operation=addition_op)
     g.nodes[addition_node].inputs = [five_node, ten_node]
@@ -56,8 +56,6 @@ def test_graph_construction():
     Graph.add_operation(arity=1, func=lambda x: -x,    string="-x")
 
     indv = Graph(5, 4, 3, 3, 2)
-
-    indv.make_connections(True)
 
     inputs = [5, 0, -5 ,3 ,0]
     result = indv.operate(inputs)

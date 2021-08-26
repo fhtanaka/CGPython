@@ -16,7 +16,7 @@ class Graph:
 
     def __init__(self, n_in: int, n_out: int, n_row: int, n_col: int, levels_back: int):
         self.nodes: Dict[str, Node] = {}
-        self.columns = []
+        self.columns: List[List[int]] = []
 
         self.n_in = n_in
         self.n_out = n_out
@@ -28,35 +28,42 @@ class Graph:
         self.add_middle_layers()
         self.add_output_layer()
 
-    def create_node_column(self, size, terminal = False, active = False, operation = None):
+        self.make_connections(True)
+
+    def create_node_column(self, size, col_num, active = False, operation = None):
         col = []
         for i in range(size):
             op = operation if operation is not None else Graph.rng.choice(Graph.operations)
-            new_node = Node(terminal=terminal, operation=op, active=active)
+            new_node = Node(col_num=col_num, operation=op, active=active)
             self.nodes[new_node.id] = new_node
             col.append(new_node.id)
         return col
 
     def add_input_layer(self):
-        inputs = self.create_node_column(self.n_in, terminal=True, operation=cte)
+        inputs = self.create_node_column(self.n_in, 0, operation=cte)
         self.columns.append(inputs)    
 
     def add_middle_layers(self):    
-        for _ in range(self.n_col):
-            col = self.create_node_column(self.n_row)
+        for i in range(self.n_col):
+            col = self.create_node_column(self.n_row, i+1)
             self.columns.append(col)
             
-    def add_output_layer(self):    
-        outputs = self.create_node_column(self.n_out, operation=cte, active=True)
+    def add_output_layer(self):
+        col_num = 1 + self.n_col
+        outputs = self.create_node_column(self.n_out, col_num, operation=cte, active=True)
         self.columns.append(outputs)
 
-    def make_connections(self, full: bool): # only active nodes have connections
+    # list of all previous nodes flattened
+    def get_possible_previous_nodes(self, col_num):
+        min_col = np.maximum(0, col_num - self.levels_back)
+        previous_cols = [value for col in self.columns[min_col:col_num] for value in col]
+        return previous_cols
+
+    def make_connections(self, full): # only active nodes have connections
         # for each column, from output layer to input layer
         start = len(self.columns)-1
         for i in range(start, 0, -1):
-            # list of all previous nodes flattened
-            min_col = np.maximum(0, i - self.levels_back)
-            previous_cols = [value for col in self.columns[min_col:i] for value in col]
+            previous_cols = self.get_possible_previous_nodes(i)
             
             # for each node in the layer i
             for j in self.columns[i]:
@@ -85,16 +92,16 @@ class Graph:
             self.nodes[nodeid].value = value
 
     # this function is mostly for testing purposes
-    def _add_node(self, value = None, operation = None, terminal = False):
+    def _add_node(self, value = None, operation = None, col_num = 1):
         if operation == None and value == None:
             operation = Graph.rng.choice(Graph.operations)
-        new_node = Node(terminal, operation, value)
+        new_node = Node(col_num, operation, value)
         self.nodes[new_node.id] = new_node
         return new_node.id
 
     def reset_graph_value(self):
         for n_id in self.nodes:
-            if not self.nodes[n_id].terminal:
+            if self.nodes[n_id].col_num != 0:
                 self.nodes[n_id].value = None
     
     def operate(self, input_values):
@@ -110,3 +117,32 @@ class Graph:
         node.value = node.operation(*[self.get_node_value(x) for x in node.inputs])
         
         return node.value
+
+    def mutate_node(self, node_id):
+        node = self.nodes[node_id]
+        n_genes = 1 + len(node.inputs) # one function gene plus n connections genes
+        mutation = Graph.rng.randint(0, n_genes)
+        if mutation == 0:
+            self.mutate_node(node_id)
+        else:
+            previous_cols = self.get_possible_previous_nodes(node.col_num)
+            node.inputs[mutation-1] = Graph.rng.choice(previous_cols)
+
+    def mutate_operation(self, node_id):
+        node = self.nodes[node_id]
+        possible_ops = [op for op in Graph.operations if op != node.operation]
+        new_op = Graph.rng.choice(possible_ops)
+
+        # in this case we should add connections
+        if new_op.arity > node.operation.arity: 
+            inputs_to_add = new_op.arity - node.operation.arity
+            previous_cols = self.get_possible_previous_nodes(node.col_num)
+            inodes_idlist = Graph.rng.choice(previous_cols, inputs_to_add)                    
+            node.add_inputs(inodes_idlist)
+        # in this case we should remove connections    
+        elif new_op.arity < node.operation.arity:
+            inputs_to_remove = node.operation.arity - new_op.arity
+            inodes_idlist = Graph.rng.choice(node.inputs, inputs_to_remove) 
+            node.remove_inputs(inodes_idlist)
+            
+        node.operation = new_op
