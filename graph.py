@@ -50,7 +50,7 @@ class Graph:
             outputs.append(new_node.id)
         self.columns.append(outputs)
 
-    def make_connections(self):
+    def make_connections_b(self): # only active nodes have connections
         # for each column, from output layer to input layer
         start = len(self.columns)-1
         for i in range(start, 0, -1):
@@ -72,6 +72,30 @@ class Graph:
                     
                     # mark picked nodes as active
                     # (another option, we could process active nodes only)
+                    for nodeid in inodes_idlist:
+                        self.nodes[nodeid].active = True
+                        
+    def make_connections(self):  # all nodes have connections
+        # for each column, from output layer to input layer
+        start = len(self.columns)-1
+        for i in range(start, 0, -1):
+            # list of all previous nodes flattened
+            previous_cols = [value for col in self.columns[:i] for value in col]
+            
+            # for each node in the layer i
+            for j in self.columns[i]:
+                current_node = self.nodes[j]
+
+                arity  = current_node.operation.arity
+                
+                # pick n=arity nodes randomly
+                inodes_idlist = Graph.rng.choice(previous_cols, arity)
+                
+                # add to the list of inputs
+                current_node.add_inputs(inodes_idlist)
+                    
+                # mark children as active if father is active
+                if current_node.active:
                     for nodeid in inodes_idlist:
                         self.nodes[nodeid].active = True
 
