@@ -1,18 +1,86 @@
 from typing import Dict
-import random
 from node import Node
 from operation import Operation
+import numpy as np
 
 class Graph:
     operations = []
+    rng = np.random
     
     def __init__(self):
         self.nodes: Dict[str, Node] = {}
         self.columns = []
+
+    def add_input_layer(self, n_in):
+        self.n_in = n_in
         
+        cte = Operation(arity=1, operation=lambda x:x, string="x")
+        
+        inputs = []
+        for i in range(self.n_in):
+            new_node = Node(terminal=True, operation=cte)
+            new_node.active = False
+            self.nodes[new_node.id] = new_node
+            inputs.append(new_node.id)
+        self.columns.append(inputs)    
+
+    def add_middle_layers(self, n_row, n_col):
+        self.n_row = n_row
+        self.n_col = n_col
+    
+        for i in range(self.n_col):
+            col = []
+            for j in range(self.n_row):
+                new_node = Node(terminal=False, operation=Graph.rng.choice(Graph.operations))
+                new_node.active = False
+                self.nodes[new_node.id] = new_node
+                col.append(new_node.id)
+            self.columns.append(col)
+            
+    def add_output_layer(self, n_out):
+        self.n_out = n_out
+    
+        cte = Operation(arity=1, operation=lambda x:x, string="x")
+        
+        outputs = []
+        for i in range(self.n_out):
+            new_node = Node(terminal=False, operation=cte)
+            new_node.active = True
+            self.nodes[new_node.id] = new_node
+            outputs.append(new_node.id)
+        self.columns.append(outputs)
+
+    def make_connections(self):
+        # for each column, from output layer to input layer
+        start = len(self.columns)-1
+        for i in range(start, 0, -1):
+            # list of all previous nodes flattened
+            previous_cols = [value for col in self.columns[:i] for value in col]
+            
+            # for each node in the layer i
+            for j in self.columns[i]:
+                current_node = self.nodes[j]
+#                 print("node", current_node.id, end=" ")
+
+                if current_node.active:
+                    arity  = current_node.operation.arity
+#                     print("with arity", arity, end=" ")
+                    
+                    # pick n=arity nodes randomly
+                    inodes_idlist = Graph.rng.choice(previous_cols, arity)
+                    
+                    # add to the list of inputs
+                    current_node.add_inputs(inodes_idlist)
+#                     print("added inputs", current_node.inputs)
+                    
+                    # mark picked nodes as active
+                    # (another option, we could process active nodes only)
+                    for nodeid in inodes_idlist:
+                        self.nodes[nodeid].active = True
+
     @staticmethod
-    def add_operation(arity, func):
-        op = Operation(arity, func)
+    def add_operation(arity, func, string):
+        op = Operation(arity, func, string)
         Graph.operations.append(op)
     
     def initializate_graph(self, n_in, n_out, n_row, n_col):
