@@ -1,13 +1,16 @@
 import itertools
-from typing import Any
+from typing import Any, Optional
 from operation import Operation
-import random
 
 class Node:
     id_counter = itertools.count().__next__
     
-    def __init__(self, col_num: int,  operation: Operation, value: Any = None, active: bool = False):
-        self.id = self.id_counter()
+    def __init__(self, col_num: int,  operation: Operation, value: Any = None, active: bool = False, n_id: Optional[int] = None):
+        self.global_id = self.id_counter()
+        if n_id is None:
+            self.id = self.global_id
+        else:
+            self.id = n_id
         self.col_num = col_num
         self.value = value
         self.operation = operation

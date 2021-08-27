@@ -14,7 +14,7 @@ class Graph:
         op = Operation(arity, func, string)
         Graph.operations.append(op)
 
-    def __init__(self, n_in: int, n_out: int, n_row: int, n_col: int, levels_back: int):
+    def __init__(self, n_in: int, n_out: int, n_row: int, n_col: int, levels_back: int, initialize: bool = True):
         self.nodes: Dict[str, Node] = {}
         self.columns: List[List[int]] = []
 
@@ -24,11 +24,12 @@ class Graph:
         self.n_col = n_col
         self.levels_back = levels_back
         
-        self.add_input_layer()
-        self.add_middle_layers()
-        self.add_output_layer()
+        if initialize:
+            self.add_input_layer()
+            self.add_middle_layers()
+            self.add_output_layer()
 
-        self.make_connections(True)
+            self.make_connections(True)
 
     def create_node_column(self, size, col_num, active = False, operation = None):
         col = []
@@ -160,3 +161,14 @@ class Graph:
             node.remove_inputs(inodes_idlist)
             
         node.operation = new_op
+    
+    def clone_graph(self):
+        clone = Graph(self.n_in, self.n_out, self.n_row, self.n_col, self.levels_back, initialize=False)
+        for n_id, n in self.nodes.items():
+            new_node = Node(n.col_num, n.operation,  n.value, n.active, n_id)
+            new_node.add_inputs(n.inputs)
+            clone.nodes[n_id] = new_node
+        for col in self.columns:
+            clone.columns.append([val for val in col])
+        
+        return clone
