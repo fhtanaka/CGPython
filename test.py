@@ -70,8 +70,6 @@ def test_clone():
         assert clone_node.operation == node.operation
         assert clone_node.inputs == node.inputs
 
-    pass
-
 def main():
     seed = 2002
     Graph.rng = np.random.RandomState(seed)
@@ -86,7 +84,7 @@ def main():
     test_get_node_value()
     test_graph_construction()
     test_clone()
-    
+
     print("If this message appears, there are no errors!! \o/")
 
 if __name__ == "__main__":

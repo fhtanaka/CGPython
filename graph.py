@@ -2,19 +2,24 @@ from typing import Dict, List
 from node import Node
 from operation import Operation
 import numpy as np
+import itertools
 
 cte = Operation(arity=1, operation=lambda x:x, string="x")
 
 class Graph:
     operations: List[Operation] = []
     rng = np.random
-    
+    id_counter = itertools.count().__next__
+
+    # TODO: maybe change this to receive an operation or be in the population
     @staticmethod
     def add_operation(arity, func, string):
         op = Operation(arity, func, string)
         Graph.operations.append(op)
 
     def __init__(self, n_in: int, n_out: int, n_row: int, n_col: int, levels_back: int, initialize: bool = True):
+        self.id = self.id_counter()
+        
         self.nodes: Dict[str, Node] = {}
         self.columns: List[List[int]] = []
 
@@ -23,6 +28,7 @@ class Graph:
         self.n_row = n_row
         self.n_col = n_col
         self.levels_back = levels_back
+        self.fitness = 0
         
         if initialize:
             self.add_input_layer()
