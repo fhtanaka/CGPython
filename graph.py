@@ -125,15 +125,22 @@ class Graph:
         
         return node.value
 
+    def nodes_eligible_for_mutation(self, only_active):
+        nodes = []
+        for n_id in self.nodes:
+            if self.nodes[n_id].col_num != 0 and (not only_active or self.nodes[n_id].active):
+                nodes.append(n_id)
+        return nodes
+
     # percentage in [0, 1]
     def probabilistic_mutation(self, percentage, only_active = False):
-        possible_nodes = [n_id for n_id in self.nodes if not only_active or self.nodes[n_id].active]
+        possible_nodes = self.nodes_eligible_for_mutation(only_active)
         for n_id in possible_nodes:
             if percentage <= Graph.rng.rand():
                 self.mutate_node_gene(n_id)
 
     def point_mutation(self, n_nodes, only_active = False):
-        possible_nodes = [n_id for n_id in self.nodes if not only_active or self.nodes[n_id].active]
+        possible_nodes = self.nodes_eligible_for_mutation(only_active)
         nodes_to_mutate = Graph.rng.choice(possible_nodes, n_nodes)
         for n_id in nodes_to_mutate:
             self.mutate_node_gene(n_id)
