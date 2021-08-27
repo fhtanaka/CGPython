@@ -118,15 +118,29 @@ class Graph:
         
         return node.value
 
-    def mutate_node(self, node_id):
+    # percentage in [0, 1]
+    def probabilistic_mutation(self, percentage, only_active = False):
+        possible_nodes = [n_id for n_id in self.nodes if not only_active or self.nodes[n_id].active]
+        for n_id in possible_nodes:
+            if percentage <= Graph.rng.rand():
+                self.mutate_node_gene(n_id)
+
+    def point_mutation(self, n_nodes, only_active = False):
+        possible_nodes = [n_id for n_id in self.nodes if not only_active or self.nodes[n_id].active]
+        nodes_to_mutate = Graph.rng.choice(possible_nodes, n_nodes)
+        for n_id in nodes_to_mutate:
+            self.mutate_node_gene(n_id)
+
+    def mutate_node_gene(self, node_id):
         node = self.nodes[node_id]
-        n_genes = 1 + len(node.inputs) # one function gene plus n connections genes
+        n_genes = len(node.inputs) + 1 # n connections genes plus the operation gene
         mutation = Graph.rng.randint(0, n_genes)
-        if mutation == 0:
-            self.mutate_node(node_id)
-        else:
+
+        if mutation < len(node.inputs): # mutates the connection
             previous_cols = self.get_possible_previous_nodes(node.col_num)
-            node.inputs[mutation-1] = Graph.rng.choice(previous_cols)
+            node.inputs[mutation] = Graph.rng.choice(previous_cols)
+        else: # mutates the operation
+            self.mutate_operation(node_id)
 
     def mutate_operation(self, node_id):
         node = self.nodes[node_id]
