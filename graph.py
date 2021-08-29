@@ -22,6 +22,7 @@ class Graph:
         
         self.nodes: Dict[str, Node] = {}
         self.columns: List[List[int]] = []
+        self.possible_connections_per_col: List[List[int]] = []
 
         self.n_in = n_in
         self.n_out = n_out
@@ -34,7 +35,9 @@ class Graph:
             self.add_input_layer()
             self.add_middle_layers()
             self.add_output_layer()
-
+            for i in range(len(self.columns)):
+                possible_connections = self.get_possible_previous_nodes(i)
+                self.possible_connections_per_col.append(possible_connections)
             self.make_connections(True)
 
     def create_node_column(self, size, col_num, active = False, operation = None):
@@ -151,7 +154,7 @@ class Graph:
         mutation = Graph.rng.randint(0, n_genes)
 
         if mutation < len(node.inputs): # mutates the connection
-            previous_cols = self.get_possible_previous_nodes(node.col_num)
+            previous_cols = self.possible_connections_per_col[node.col_num]
             node.inputs[mutation] = Graph.rng.choice(previous_cols)
         else: # mutates the operation
             self.mutate_operation(node_id)
@@ -164,7 +167,7 @@ class Graph:
         # in this case we should add connections
         if new_op.arity > node.operation.arity: 
             inputs_to_add = new_op.arity - node.operation.arity
-            previous_cols = self.get_possible_previous_nodes(node.col_num)
+            previous_cols = self.possible_connections_per_col[node.col_num]
             inodes_idlist = Graph.rng.choice(previous_cols, inputs_to_add)                    
             node.add_inputs(inodes_idlist)
         # in this case we should remove connections    
@@ -183,5 +186,6 @@ class Graph:
             clone.nodes[n_id] = new_node
         for col in self.columns:
             clone.columns.append([val for val in col])
+        clone.possible_connections_per_col = self.possible_connections_per_col
         
         return clone

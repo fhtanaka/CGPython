@@ -34,6 +34,11 @@ class Population:
 
         children_per_parent = int(self.population_size/len(champions) - 1)
         for parent in champions:
+            for _, node in parent.nodes.items():
+                node.value = None
+                if node.col_num != 1 + parent.n_col: 
+                    node.active = False
+                
             new_population.append(parent)
             for _ in range(children_per_parent):
                 indv = parent.clone_graph()

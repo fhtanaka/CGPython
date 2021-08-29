@@ -21,5 +21,15 @@ class Node:
         for ids in node_ids:
             self.inputs.append(ids)
     
+    # TODO: fix this hack. The problem is that if i have the self.inputs[2, 2] and 
+    # I have to remove [2] I want only to remove one of the inputs, not both
     def remove_inputs(self, ids_to_remove):
-        self.inputs = [i for i in self.inputs if i not in ids_to_remove]
+        new_inputs = []
+        for r in ids_to_remove:
+            flag = True
+            for id in self.inputs:
+                if id == r and flag:
+                    flag = False
+                    continue
+                new_inputs.append(id)
+        self.inputs = new_inputs
