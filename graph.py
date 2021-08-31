@@ -111,8 +111,12 @@ class Graph:
 
     def reset_graph_value(self):
         for n_id in self.nodes:
-            if self.nodes[n_id].col_num != 0:
-                self.nodes[n_id].value = None
+            n = self.nodes[n_id]
+            if n.col_num != 0:
+                n.value = None
+                n.active = False
+        for n_id in self.columns[-1]:
+            self.activate_node(n_id)
     
     def operate(self, input_values):
         self.set_inputs(input_values)
@@ -189,3 +193,9 @@ class Graph:
         clone.possible_connections_per_col = self.possible_connections_per_col
         
         return clone
+    
+    def activate_node(self, node_id):
+        n = self.nodes[node_id]
+        n.active = True
+        for i in n.inputs:
+            self.activate_node(i)

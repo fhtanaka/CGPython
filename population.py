@@ -36,7 +36,8 @@ class Population:
         self.mutate_active = mutate_active_only
 
         self.indvs: List[Graph] = []
-        for _ in range(population_size):
+        # creating a population of size 1 + lambda
+        for _ in range(population_size) + n_champions: 
             indv = Graph(n_in, n_out, n_row, n_col, levels_back)
             self.indvs.append(indv)
     
@@ -48,7 +49,7 @@ class Population:
 
         new_population: List[Graph] = []
 
-        children_per_parent = int(self.population_size/len(champions) - 1)
+        children_per_parent = int(self.population_size/len(champions))
         for parent in champions:
             for _, node in parent.nodes.items():
                 node.value = None
@@ -65,3 +66,7 @@ class Population:
                 new_population.append(indv)
         
         self.indvs = new_population
+    
+    def get_best_indvs(self, n):
+        self.indvs.sort(key=lambda x: (x.fitness * self.minimize_fitness, x.id))
+        return self.indvs[-1*n:]
