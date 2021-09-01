@@ -21,9 +21,9 @@ invert_op = Operation(1, invert, "-x")
 def test_get_node_value():
     g = Graph(0, 0, 0 ,0 , 0)
 
-    five_node = g._add_node(5, terminal=True)
-    ten_node = g._add_node(10, terminal=True)
-    zero_node = g._add_node(0, terminal=True)
+    five_node = g._add_node(5, col_num=0)
+    ten_node = g._add_node(10, col_num=0)
+    zero_node = g._add_node(0, col_num=0)
 
     addition_node = g._add_node(operation=addition_op)
     g.nodes[addition_node].inputs = [five_node, ten_node]
@@ -48,28 +48,43 @@ def test_get_node_value():
 
 def test_graph_construction():
     ## set up ##
-    seed = 2002
-
-    Graph.rng = np.random.RandomState(seed)
-    Graph.add_operation(arity=1, func=lambda x: x+1,   string="x+1")
-    Graph.add_operation(arity=2, func=lambda x,y: x+y, string="x+y")
-    Graph.add_operation(arity=1, func=lambda x: -x,    string="-x")
 
     indv = Graph(5, 4, 3, 3, 2)
-
-    indv.make_connections(True)
 
     inputs = [5, 0, -5 ,3 ,0]
     result = indv.operate(inputs)
 
-    assert result[0] == 4
-    assert result[1] == 10
-    assert result[2] == 10
-    assert result[3] == -2
+    assert result[0] == 16
+    assert result[1] == 11
+    assert result[2] == 11
+    assert result[3] == 5
+
+def test_clone():
+    g = Graph(3, 3, 3, 3, 2)
+    clone = g.clone_graph()
+    for id, node in g.nodes.items():
+        clone_node = clone.nodes[id]
+        assert clone_node.global_id != node.id
+        assert clone_node.id == node.id
+        assert clone_node.active == node.active
+        assert clone_node.operation == node.operation
+        assert clone_node.inputs == node.inputs
 
 def main():
+    seed = 2002
+    Graph.rng = np.random.RandomState(seed)
+    Graph.add_operation(arity=1, func=constant, string="x")
+    Graph.add_operation(arity=1, func=increment, string="x+1")
+    Graph.add_operation(arity=1, func=invert, string="-x")
+    Graph.add_operation(arity=2, func=addition, string="x+y")
+    Graph.add_operation(arity=2, func=multiplication, string="x*y")
+    Graph.add_operation(arity=2, func=subtraction, string="x-y")
+    Graph.add_operation(arity=2, func=protected_div, string="*x/y")
+
     test_get_node_value()
     test_graph_construction()
+    test_clone()
+
     print("If this message appears, there are no errors!! \o/")
 
 if __name__ == "__main__":
