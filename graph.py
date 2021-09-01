@@ -29,7 +29,7 @@ class Graph:
         self.n_row = n_row
         self.n_col = n_col
         self.levels_back = levels_back
-        self.fitness = 0
+        self.fitness: int = 0
         
         if initialize:
             self.add_input_layer()
@@ -134,6 +134,7 @@ class Graph:
         
         return node.value
 
+    # TODO: check if its bottleneck, if it is, change to one liner 
     def nodes_eligible_for_mutation(self, only_active):
         nodes = []
         for n_id in self.nodes:
