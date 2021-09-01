@@ -39,6 +39,7 @@ class Graph:
                 possible_connections = self.get_possible_previous_nodes(i)
                 self.possible_connections_per_col.append(possible_connections)
             self.make_connections(True)
+            self.reset_graph_value()
 
     def create_node_column(self, size, col_num, active = False, operation = None):
         col = []
@@ -121,6 +122,7 @@ class Graph:
     def operate(self, input_values):
         self.set_inputs(input_values)
         results = [self.get_node_value(out) for out in self.columns[-1]]
+        self.reset_graph_value()
         return results
 
     def get_node_value(self, node_id):
@@ -143,7 +145,7 @@ class Graph:
     def probabilistic_mutation(self, percentage, only_active = False):
         possible_nodes = self.nodes_eligible_for_mutation(only_active)
         for n_id in possible_nodes:
-            if percentage <= Graph.rng.rand():
+            if Graph.rng.rand() <= percentage:
                 self.mutate_node_gene(n_id)
 
     def point_mutation(self, n_nodes, only_active = False):
@@ -191,7 +193,7 @@ class Graph:
         for col in self.columns:
             clone.columns.append([val for val in col])
         clone.possible_connections_per_col = self.possible_connections_per_col
-        
+        clone.reset_graph_value()
         return clone
     
     def activate_node(self, node_id):

@@ -36,8 +36,7 @@ class Population:
         self.mutate_active = mutate_active_only
 
         self.indvs: List[Graph] = []
-        # creating a population of size 1 + lambda
-        for _ in range(population_size) + n_champions: 
+        for _ in range(population_size + n_champions): 
             indv = Graph(n_in, n_out, n_row, n_col, levels_back)
             self.indvs.append(indv)
     
@@ -48,14 +47,9 @@ class Population:
         champions = self.indvs[-1*self.n_champions:]
 
         new_population: List[Graph] = []
-
         children_per_parent = int(self.population_size/len(champions))
         for parent in champions:
-            for _, node in parent.nodes.items():
-                node.value = None
-                if node.col_num != 1 + parent.n_col: 
-                    node.active = False
-                
+            parent.reset_graph_value() # I think this reset is unnecessary but it is here just to make sure
             new_population.append(parent)
             for _ in range(children_per_parent):
                 indv = parent.clone_graph()
