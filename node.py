@@ -1,28 +1,22 @@
 import itertools
+from typing import Any, Optional
+from operation import Operation
 
-class Operation:
-    def __init__(self, arity: int, operation: callable):
-        self.arity = arity
-        self.func = operation
 
 class Node:
-
     id_counter = itertools.count().__next__
     
-    def __init__(self, terminal: bool,  operation: Operation, value = None) -> None:
+    def __init__(self, terminal: bool,  operation: Operation, value: Any = None, active: bool = False) -> None:
         self.id = self.id_counter()
         self.terminal = terminal
         self.value = value
         self.operation = operation
+        self.active = active
         self.inputs = [] # List of node_ids
     
-    def add_inputs(self, node_ids):
-        for id in node_ids:
-            self.inputs.append(id)
+    def add_inputs(self, node_ids: list) -> None:
+        for ids in node_ids:
+            self.inputs.append(ids)
     
-    def remove_inputs(self, ids_to_remove):
-        new_inputs = []
-        for id in self.inputs:
-            if id not in ids_to_remove:
-                new_inputs.append(id)
-        self.inputs = new_inputs
+    def remove_inputs(self, ids_to_remove: list) -> None:
+        self.inputs = [i for i in self.inputs if i not in ids_to_remove]
