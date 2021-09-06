@@ -16,13 +16,13 @@ seed = 2002
 n_function_evaluations = 1
 Graph.rng = np.random.RandomState(seed)
 
-Graph.add_operation(arity=1, func=constant, string="x")
-Graph.add_operation(arity=1, func=increment, string="x+1")
-Graph.add_operation(arity=1, func=invert, string="-x")
-Graph.add_operation(arity=2, func=addition, string="x+y")
-Graph.add_operation(arity=2, func=multiplication, string="x*y")
-Graph.add_operation(arity=2, func=subtraction, string="x-y")
-Graph.add_operation(arity=2, func=protected_div, string="*x/y")
+Population.add_operation(arity=1, func=constant, string="x")
+Population.add_operation(arity=1, func=increment, string="x+1")
+Population.add_operation(arity=1, func=invert, string="-x")
+Population.add_operation(arity=2, func=addition, string="x+y")
+Population.add_operation(arity=2, func=multiplication, string="x*y")
+Population.add_operation(arity=2, func=subtraction, string="x-y")
+Population.add_operation(arity=2, func=protected_div, string="*x/y")
 
 def f1_target(x, y):
     return x ** 2 + 2*y

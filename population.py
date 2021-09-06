@@ -1,8 +1,16 @@
 from graph import Graph
+from operation import Operation 
 from typing import List, Optional
 
 
 class Population:
+
+    operations: List[Operation] = []
+    @staticmethod
+    def add_operation(arity, func, string):
+        op = Operation(arity, func, string)
+        Population.operations.append(op)
+
     def __init__(
         self, 
         population_size: int,
@@ -37,7 +45,7 @@ class Population:
 
         self.indvs: List[Graph] = []
         for _ in range(population_size + n_champions): 
-            indv = Graph(n_in, n_out, n_row, n_col, levels_back)
+            indv = Graph(n_in, n_out, n_row, n_col, levels_back, self.operations)
             self.indvs.append(indv)
     
     def iterate_one_plus_lambda(self):
