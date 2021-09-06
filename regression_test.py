@@ -51,27 +51,6 @@ def create_tests(n):
         tests.append(([x,y], (target1, target2)))
     return tests
 
-# def test_population (pop: Population, goal_fit):
-#     fit_achieved = False
-
-#     for i in range(pop.gens):
-#         print("generation ", i)
-#         min_fitness = 1000000000
-#         for ind in pop.indvs:
-#             fitness = fitness_func(ind, tests)
-#             print(ind.id, " fit: ", fitness)
-#             ind.fitness = fitness
-#             if fitness < min_fitness:
-#                 min_fitness = fitness
-#             if fitness <= goal_fit:
-#                 fit_achieved = True
-#         if fit_achieved:
-#             break
-#         print("min fitness of gen: ", min_fitness)
-#         pop.iterate_one_plus_lambda()
-
-#     print("finish")
-
 def main():
     tests = create_tests(n_function_evaluations)
     population = Population (
@@ -88,7 +67,7 @@ def main():
         prob_mut_chance = .05,
         mutate_active_only = False
     )
-    population.one_plus_lamda(1000, 1, 0.1)
+    population.one_plus_lamda(1000, 1, 0.1, True)
     # test_population(population, 0.1)
 
 if __name__ == "__main__":

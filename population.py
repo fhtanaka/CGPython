@@ -66,7 +66,7 @@ class Population:
         
         self.indvs = new_population
 
-    def one_plus_lamda(self, generations: int, n_champions: int, goal_fit: float):
+    def one_plus_lamda(self, generations: int, n_champions: int, goal_fit: float, report=False):
 
         fitness_modifier = 1
         compare_fit = -1000000000
@@ -76,12 +76,14 @@ class Population:
 
         fit_achieved = False
         for i in range(generations):
-            print("generation ", i)
+            if report:
+                print("generation ", i)
             best_fitness = compare_fit
             for ind in self.indvs:
                 fitness = self.fitness_func(ind)
                 ind.fitness = fitness
-                print(ind.id, " fit: ", fitness)
+                if report:
+                    print(ind.id, " fit: ", fitness)
                 if self.minimize_fitness:
                     if fitness < best_fitness:
                         best_fitness = fitness
@@ -92,11 +94,17 @@ class Population:
                         best_fitness = fitness
                     if fitness >= goal_fit:
                         fit_achieved = True
-            print("Best fitness of gen: ", best_fitness)
+            if report:
+                print("Best fitness of gen: ", best_fitness)
             if fit_achieved:
                 break
             self.iterate_one_plus_lambda(n_champions, fitness_modifier)
+
+        print("Finished execution")
+        print("Total generations: {}".format(i))
+        print("Best Fitness: {}".format(best_fitness))
     
+
     def get_best_indvs(self, n):
         self.indvs.sort(key=lambda x: (x.fitness * self.minimize_fitness, x.id))
         return self.indvs[-1*n:]
