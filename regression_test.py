@@ -41,34 +41,39 @@ def fitness_func(individual: Graph, tests):
         fitness += (t[1][0] - pred1)**2
     return  fitness
 
-def test_population (pop: Population, goal_fit):
-    fit_achieved = False
+def create_tests(n):
     tests = []
-    for i in range(n_function_evaluations):
+    for i in range(n):
         x = np.random.uniform(-10, +10)
         y = np.random.uniform(-10, +10)
         target1 = f1_target(x, y)
         target2 = f2_target(x, y)
         tests.append(([x,y], (target1, target2)))
-    for i in range(pop.gens):
-        print("generation ", i)
-        min_fitness = 1000000000
-        for ind in pop.indvs:
-            fitness = fitness_func(ind, tests)
-            print(ind.id, " fit: ", fitness)
-            ind.fitness = fitness
-            if fitness < min_fitness:
-                min_fitness = fitness
-            if fitness <= goal_fit:
-                fit_achieved = True
-        if fit_achieved:
-            break
-        print("min fitness of gen: ", min_fitness)
-        pop.iterate_one_plus_lambda()
+    return tests
 
-    print("finish")
+# def test_population (pop: Population, goal_fit):
+#     fit_achieved = False
+
+#     for i in range(pop.gens):
+#         print("generation ", i)
+#         min_fitness = 1000000000
+#         for ind in pop.indvs:
+#             fitness = fitness_func(ind, tests)
+#             print(ind.id, " fit: ", fitness)
+#             ind.fitness = fitness
+#             if fitness < min_fitness:
+#                 min_fitness = fitness
+#             if fitness <= goal_fit:
+#                 fit_achieved = True
+#         if fit_achieved:
+#             break
+#         print("min fitness of gen: ", min_fitness)
+#         pop.iterate_one_plus_lambda()
+
+#     print("finish")
 
 def main():
+    tests = create_tests(n_function_evaluations)
     population = Population (
         population_size = 4,
         n_in = 2,
@@ -76,15 +81,15 @@ def main():
         n_row = 8,
         n_col = 8,
         levels_back = 3,
-        n_champions = 1,
         mutation_strategy = "prob",
-        generations = 1000,
+        fitness_func = lambda x: fitness_func(x, tests),
         minimize_fitness = True,
         point_mut_qnt = 10,
         prob_mut_chance = .05,
         mutate_active_only = False
     )
-    test_population(population, 0.1)
+    population.one_plus_lamda(1000, 1, 0.1)
+    # test_population(population, 0.1)
 
 if __name__ == "__main__":
     main()
