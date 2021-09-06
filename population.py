@@ -1,6 +1,6 @@
 from graph import Graph
 from operation import Operation 
-from typing import Callable, List, Optional
+from typing import Callable, List
 
 
 class Population:
@@ -69,9 +69,9 @@ class Population:
     def one_plus_lamda(self, generations: int, n_champions: int, goal_fit: float, report=False):
 
         fitness_modifier = 1
-        compare_fit = -1000000000
+        compare_fit = float('-inf')
         if self.minimize_fitness:
-            compare_fit = 1000000000
+            compare_fit = float('inf')
             fitness_modifier = -1
 
         fit_achieved = False

@@ -1,5 +1,4 @@
 from population import Population
-import matplotlib.pyplot as plt
 import numpy as np
 from docopt import docopt
 from graph import Graph
