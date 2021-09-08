@@ -1,7 +1,8 @@
 from population import Population
 import numpy as np
-from docopt import docopt
 from graph import Graph
+import cProfile
+import pstats
 
 addition = lambda x, y: x+y
 multiplication = lambda x, y: x*y
@@ -12,7 +13,7 @@ increment = lambda x: x+1
 invert = lambda x: -x
 
 seed = 2002
-n_function_evaluations = 1
+n_function_evaluations = 10
 Graph.rng = np.random.RandomState(seed)
 
 Population.add_operation(arity=1, func=constant, string="x")
@@ -33,11 +34,11 @@ def fitness_func(individual: Graph, tests):
 
     fitness = 0
     for t in tests:
-#         pred1, pred2 = individual.operate(t[0])
-#         fitness += (t[1][0] - pred1)**2 + (t[1][1] - pred2)**2
-        pred1 = individual.operate(t[0])[0]
-      
-        fitness += (t[1][0] - pred1)**2
+        pred1, pred2 = individual.operate([t[0][0], t[0][1]])
+        fitness += (t[1][0] - pred1)**2 + (t[1][1] - pred2)**2
+
+        # pred1 = individual.operate(t[0])[0]
+        # fitness += (t[1][0] - pred1)**2
     return  fitness
 
 def create_tests(n):
@@ -55,7 +56,7 @@ def main():
     population = Population (
         population_size = 4,
         n_in = 2,
-        n_out = 1,
+        n_out = 2,
         n_row = 8,
         n_col = 8,
         levels_back = 3,
@@ -66,7 +67,12 @@ def main():
         prob_mut_chance = .05,
         mutate_active_only = False
     )
-    population.one_plus_lamda(1000, 1, 0.1, True)
+    profile = cProfile.Profile()
+    profile.runcall(lambda: population.one_plus_lamda(1000, 1, 0.1, False))
+    ps = pstats.Stats(profile)
+    ps.print_stats()
+    print()
+    
     # test_population(population, 0.1)
 
 if __name__ == "__main__":
