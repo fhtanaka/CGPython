@@ -4,9 +4,7 @@ Implementation of cartesian genetic programming in python
 Roadmap:
 	- polir o codigo
 		- principalmente na classe Population (CartesianGP)
-		- mudar o add_operation para a classe acima
-		- adicionar fitness_func como parte da population
-		- adicionar iterar geracoes no Population
+		- melhorar os nomes de funcoes e classes
 	- rodar mais testes
 	- otimizacao
 		- profile

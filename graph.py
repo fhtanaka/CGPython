@@ -7,17 +7,11 @@ import itertools
 cte = Operation(arity=1, operation=lambda x:x, string="x")
 
 class Graph:
-    operations: List[Operation] = []
     rng = np.random
     id_counter = itertools.count().__next__
 
-    # TODO: maybe change this to receive an operation or be in the population
-    @staticmethod
-    def add_operation(arity, func, string):
-        op = Operation(arity, func, string)
-        Graph.operations.append(op)
 
-    def __init__(self, n_in: int, n_out: int, n_row: int, n_col: int, levels_back: int, initialize: bool = True):
+    def __init__(self, n_in: int, n_out: int, n_row: int, n_col: int, levels_back: int, available_operations: List[Operation]=[cte], initialize: bool = True):
         self.id = self.id_counter()
         
         self.nodes: Dict[str, Node] = {}
@@ -29,6 +23,7 @@ class Graph:
         self.n_row = n_row
         self.n_col = n_col
         self.levels_back = levels_back
+        self.available_operations = available_operations
         self.fitness: int = 0
         
         if initialize:
@@ -44,7 +39,7 @@ class Graph:
     def create_node_column(self, size, col_num, active = False, operation = None):
         col = []
         for i in range(size):
-            op = operation if operation is not None else Graph.rng.choice(Graph.operations)
+            op = operation if operation is not None else Graph.rng.choice(self.available_operations)
             new_node = Node(col_num=col_num, operation=op, active=active)
             self.nodes[new_node.id] = new_node
             col.append(new_node.id)
@@ -105,7 +100,7 @@ class Graph:
     # this function is mostly for testing purposes
     def _add_node(self, value = None, operation = None, col_num = 1):
         if operation == None and value == None:
-            operation = Graph.rng.choice(Graph.operations)
+            operation = Graph.rng.choice(self.available_operations)
         new_node = Node(col_num, operation, value)
         self.nodes[new_node.id] = new_node
         return new_node.id
@@ -168,7 +163,7 @@ class Graph:
 
     def mutate_operation(self, node_id):
         node = self.nodes[node_id]
-        possible_ops = [op for op in Graph.operations if op != node.operation]
+        possible_ops = [op for op in self.available_operations if op != node.operation]
         new_op = Graph.rng.choice(possible_ops)
 
         # in this case we should add connections
@@ -194,6 +189,7 @@ class Graph:
         for col in self.columns:
             clone.columns.append([val for val in col])
         clone.possible_connections_per_col = self.possible_connections_per_col
+        clone.available_operations = self.available_operations
         clone.reset_graph_value()
         return clone
     
