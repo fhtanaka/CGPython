@@ -87,13 +87,13 @@ class Population:
                 if self.minimize_fitness:
                     if fitness < best_fitness:
                         best_fitness = fitness
-                    if fitness <= goal_fit:
-                        fit_achieved = True
+                        if fitness <= goal_fit:
+                            fit_achieved = True
                 else:
                     if fitness > best_fitness:
                         best_fitness = fitness
-                    if fitness >= goal_fit:
-                        fit_achieved = True
+                        if fitness >= goal_fit:
+                            fit_achieved = True
             if report:
                 print("Best fitness of gen: ", best_fitness)
             if fit_achieved:

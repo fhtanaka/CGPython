@@ -13,7 +13,7 @@ increment = lambda x: x+1
 invert = lambda x: -x
 
 seed = 2002
-n_function_evaluations = 10
+n_function_evaluations = 100
 Graph.rng = np.random.RandomState(seed)
 
 Population.add_operation(arity=1, func=constant, string="x")
@@ -25,10 +25,10 @@ Population.add_operation(arity=2, func=subtraction, string="x-y")
 Population.add_operation(arity=2, func=protected_div, string="*x/y")
 
 def f1_target(x, y):
-    return x ** 2 + 2*y
+    return x + y*x
 
 def f2_target(x, y):
-    return (x+3)*(y-5)
+    return (x)*(y)*x
 
 def fitness_func(individual: Graph, tests):
 
@@ -54,7 +54,7 @@ def create_tests(n):
 def main():
     tests = create_tests(n_function_evaluations)
     population = Population (
-        population_size = 4,
+        population_size = 8,
         n_in = 2,
         n_out = 2,
         n_row = 8,
@@ -64,11 +64,11 @@ def main():
         fitness_func = lambda x: fitness_func(x, tests),
         minimize_fitness = True,
         point_mut_qnt = 10,
-        prob_mut_chance = .05,
+        prob_mut_chance = .1,
         mutate_active_only = False
     )
     profile = cProfile.Profile()
-    profile.runcall(lambda: population.one_plus_lamda(1000, 1, 0.1, False))
+    profile.runcall(lambda: population.one_plus_lamda(1000, 2, 0.1, False))
     ps = pstats.Stats(profile)
     ps.print_stats()
     print()
