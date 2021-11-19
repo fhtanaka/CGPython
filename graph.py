@@ -3,6 +3,8 @@ from node import Node
 from operation import Operation
 import numpy as np
 import itertools
+import networkx as nx
+import matplotlib.pyplot as plt
 
 cte = Operation(arity=1, operation=lambda x:x, string="x")
 
@@ -14,7 +16,7 @@ class Graph:
     def __init__(self, n_in: int, n_out: int, n_row: int, n_col: int, levels_back: int, available_operations: List[Operation]=[cte], initialize: bool = True):
         self.id = self.id_counter()
         
-        self.nodes: Dict[str, Node] = {}
+        self.nodes: Dict[int, Node] = {}
         self.columns: List[List[int]] = []
         self.possible_connections_per_col: List[List[int]] = []
 
@@ -198,3 +200,44 @@ class Graph:
         n.active = True
         for i in n.inputs:
             self.activate_node(i)
+
+    def draw_graph(self):
+        graph = nx.Graph()
+        pos = {}
+        labels = {}
+        col_num = len(self.columns) - 1
+        for col in reversed(self.columns):
+            row = 0
+            for n_id in col:
+                node = self.nodes[n_id]
+                pos[node.id] = (col_num, row)
+
+                if col_num == 0:
+                    labels[node.id] = "In_" + str(row)
+                elif col_num == len(self.columns)-1:
+                    labels[node.id] = "Out_" + str(row)
+                elif node.operation != None:
+                    labels[node.id] = node.operation.string
+                    
+                for input in node.inputs:
+                    graph.add_edge(input, node.id)
+                row += 1
+            col_num -= 1
+        # self.get_node_value(out) for out in self.columns[-1]
+        
+        options = {
+            "font_size": 12,
+            "node_size": 1500,
+            "node_color": "white",
+            "edgecolors": "black",
+            "linewidths": 2,
+            "width": 2,
+            "labels": labels,
+        }
+        nx.draw_networkx(graph, pos, **options)
+
+        # Set margins for the axes so that nodes aren't clipped
+        ax = plt.gca()
+        ax.margins(0.20)
+        plt.axis("off")
+        plt.show()

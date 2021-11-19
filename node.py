@@ -1,5 +1,5 @@
 import itertools
-from typing import Any, Optional
+from typing import Any, List, Optional
 from operation import Operation
 
 class Node:
@@ -15,7 +15,7 @@ class Node:
         self.value = value
         self.operation = operation
         self.active = active
-        self.inputs = [] # List of node_ids
+        self.inputs: List[int] = [] # List of node_ids
     
     def add_inputs(self, node_ids):
         for ids in node_ids:
