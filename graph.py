@@ -205,6 +205,16 @@ class Graph:
         graph = nx.Graph()
         pos = {}
         labels = {}
+        color_dict = {
+            0: "tab:purple",
+            1: "tab:red",
+            3: "tab:olive",
+            2: "tab:orange",
+            4: "tab:green",
+            5: "tab:blue",
+        }
+
+
         col_num = len(self.columns) - 1
         for col in reversed(self.columns):
             row = 0
@@ -220,21 +230,23 @@ class Graph:
                     labels[node.id] = node.operation.string
                     
                 for input in node.inputs:
-                    graph.add_edge(input, node.id)
+                    graph.add_edge(input, node.id, color=color_dict[col_num%len(color_dict)])
+        
                 row += 1
             col_num -= 1
-        # self.get_node_value(out) for out in self.columns[-1]
         
         options = {
             "font_size": 12,
             "node_size": 1500,
             "node_color": "white",
             "edgecolors": "black",
+            "edge_color": nx.get_edge_attributes(graph,'color').values(),
             "linewidths": 2,
             "width": 2,
             "labels": labels,
+            "pos": pos
         }
-        nx.draw_networkx(graph, pos, **options)
+        nx.draw_networkx(graph, **options)
 
         # Set margins for the axes so that nodes aren't clipped
         ax = plt.gca()
