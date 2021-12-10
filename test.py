@@ -81,11 +81,21 @@ def test_clone():
         assert clone_node.operation == node.operation
         assert clone_node.inputs == node.inputs
 
+def test_draw():
+    g = Graph(
+        n_in = 3, 
+        n_out = 3, 
+        n_row = 3, 
+        n_col = 3, 
+        levels_back = 2, 
+        available_operations = Population.operations)
+    g.draw_graph()
+
 def main():
     test_get_node_value()
     test_graph_construction()
     test_clone()
-
+    test_draw()
     print("If this message appears, there are no errors!! \o/")
 
 if __name__ == "__main__":
