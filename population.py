@@ -3,6 +3,11 @@ from operation import Operation
 from typing import Callable, List
 
 
+def order_by_fitness(fitness_modifier):
+    def func(x: Graph):
+        return (x.fitness * fitness_modifier, x.id)
+    return func
+
 class Population:
 
     operations: List[Operation] = []
@@ -48,22 +53,28 @@ class Population:
     def iterate_one_plus_lambda(self, n_champions, fitness_modifier):
         # This order the indvs first by ID (lesser IDs first) and then by fitness
         # Since these sorts are stable, the indvs at the end of the array are the champions
-        self.indvs.sort(key=lambda x: (x.fitness * fitness_modifier, x.id))
+        self.indvs.sort(key=order_by_fitness(fitness_modifier))
         champions = self.indvs[-1*n_champions:]
 
         new_population: List[Graph] = []
         children_per_parent = int(self.population_size/len(champions))
+
         for parent in champions:
-            parent.reset_graph_value() # I think this reset is unnecessary but it is here just to make sure
+            # I think this reset is unnecessary but it is here just to make sure
+            parent.reset_graph_value()
             new_population.append(parent)
-            for _ in range(children_per_parent):
+
+        for _ in range(children_per_parent):
+            for parent in champions:
+                parent.reset_graph_value()
                 indv = parent.clone_graph()
                 if self.mutation_strategy == "point":
                     indv.point_mutation(self.point_mut_qnt, self.mutate_active)
                 elif self.mutation_strategy == "prob":
-                    indv.probabilistic_mutation(self.prob_mut_chance, self.mutate_active)
+                    indv.probabilistic_mutation(
+                        self.prob_mut_chance, self.mutate_active)
                 new_population.append(indv)
-        
+
         self.indvs = new_population
 
     def one_plus_lamda(self, generations: int, n_champions: int, goal_fit: float, report=False):

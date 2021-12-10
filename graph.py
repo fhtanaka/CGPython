@@ -6,7 +6,12 @@ import itertools
 import networkx as nx
 import matplotlib.pyplot as plt
 
-cte = Operation(arity=1, operation=lambda x:x, string="x")
+
+def cte_op(x):
+    return x
+
+
+cte = Operation(arity=1, operation=cte_op, string="x")
 
 class Graph:
     rng = np.random
@@ -81,7 +86,7 @@ class Graph:
                     arity  = current_node.operation.arity
                     
                     # pick n=arity nodes randomly
-                    inodes_idlist = Graph.rng.choice(previous_cols, arity)
+                    inodes_idlist = Graph.rng.choice(previous_cols, arity, replace=False)
                     
                     # add to the list of inputs
                     current_node.add_inputs(inodes_idlist)
@@ -127,7 +132,10 @@ class Graph:
         if node.value is not None:
             return node.value
         
-        node.value = node.operation(*[self.get_node_value(x) for x in node.inputs])
+        inputs = [self.get_node_value(x) for x in node.inputs]
+        if len(inputs) != node.operation.arity:
+            print("something went wrong")
+        node.value = node.operation(*inputs)
         
         return node.value
 
@@ -148,7 +156,7 @@ class Graph:
 
     def point_mutation(self, n_nodes, only_active = False):
         possible_nodes = self.nodes_eligible_for_mutation(only_active)
-        nodes_to_mutate = Graph.rng.choice(possible_nodes, n_nodes)
+        nodes_to_mutate = Graph.rng.choice(possible_nodes, n_nodes, replace=False)
         for n_id in nodes_to_mutate:
             self.mutate_node_gene(n_id)
 
@@ -172,12 +180,12 @@ class Graph:
         if new_op.arity > node.operation.arity: 
             inputs_to_add = new_op.arity - node.operation.arity
             previous_cols = self.possible_connections_per_col[node.col_num]
-            inodes_idlist = Graph.rng.choice(previous_cols, inputs_to_add)                    
+            inodes_idlist = Graph.rng.choice(previous_cols, inputs_to_add, replace=False)                    
             node.add_inputs(inodes_idlist)
         # in this case we should remove connections    
         elif new_op.arity < node.operation.arity:
             inputs_to_remove = node.operation.arity - new_op.arity
-            inodes_idlist = Graph.rng.choice(node.inputs, inputs_to_remove) 
+            inodes_idlist = Graph.rng.choice(node.inputs, inputs_to_remove, replace=False)
             node.remove_inputs(inodes_idlist)
             
         node.operation = new_op
@@ -201,7 +209,8 @@ class Graph:
         for i in n.inputs:
             self.activate_node(i)
 
-    def draw_graph(self):
+    def draw_graph(self, only_active=True):
+        plt.rcParams["figure.figsize"] = (15, 20)
         graph = nx.Graph()
         pos = {}
         labels = {}
@@ -220,6 +229,8 @@ class Graph:
             row = 0
             for n_id in col:
                 node = self.nodes[n_id]
+                if only_active and not node.active:
+                    continue
                 pos[node.id] = (col_num, row)
 
                 if col_num == 0:
@@ -228,7 +239,8 @@ class Graph:
                     labels[node.id] = "Out_" + str(row)
                 elif node.operation != None:
                     labels[node.id] = node.operation.string
-                    
+
+                graph.add_node(node.id)    
                 for input in node.inputs:
                     graph.add_edge(input, node.id, color=color_dict[col_num%len(color_dict)])
         
