@@ -82,7 +82,13 @@ def test_clone():
         assert clone_node.inputs == node.inputs
 
 def test_draw():
-    g = Graph(3, 3, 3, 3, 2, Population.operations)
+    g = Graph(
+        n_in = 3, 
+        n_out = 3, 
+        n_row = 3, 
+        n_col = 3, 
+        levels_back = 2, 
+        available_operations = Population.operations)
     g.draw_graph()
 
 def main():
