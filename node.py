@@ -5,17 +5,13 @@ from operation import Operation
 class Node:
     id_counter = itertools.count().__next__
     
-    def __init__(self, col_num: int,  operation: Operation, value: Any = None, active: bool = False, n_id: Optional[int] = None):
+    def __init__(self, local_id: int, operation: float, value: Any = None, active: bool = False):
         self.global_id = self.id_counter()
-        if n_id is None:
-            self.id = self.global_id
-        else:
-            self.id = n_id
-        self.col_num = col_num
+        self.id = local_id
         self.value = value
         self.operation = operation
         self.active = active
-        self.inputs: List[int] = [] # List of node_ids
+        self.inputs: List[float] = [] # List of node_ids
     
     def add_inputs(self, node_ids):
         for ids in node_ids:
