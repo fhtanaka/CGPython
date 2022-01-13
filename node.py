@@ -1,6 +1,5 @@
 import itertools
-from typing import Any, List, Optional
-from operation import Operation
+from typing import Any, List
 
 class Node:
     id_counter = itertools.count().__next__

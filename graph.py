@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 def cte_op(x):
     return x
 
-
 cte = Operation(arity=1, operation=cte_op, string="x")
 
 class Graph:
@@ -20,15 +19,14 @@ class Graph:
     def __init__(self, n_in: int, n_out: int, n_middle: int, available_operations: List[Operation] =[cte], initialize: bool = True):
         self.id = self.id_counter()
         
-        self.nodes: Dict[int, Node] = {}
-        self.columns: List[List[int]] = []
-        self.possible_connections_per_col: List[List[int]] = []
 
         self.n_in = n_in
         self.n_out = n_out
         self.n_middle = n_middle
-
         self.total_nodes = n_in + n_out + n_middle
+
+        self.nodes: List[Node] = [None for _ in range(self.total_nodes)]
+
         self.available_operations = available_operations
         self.fitness: int = 0
         
@@ -39,13 +37,15 @@ class Graph:
                 op_arity = self.available_operations[op_index].arity
 
                 active = False
-                if n_id >= n_in+ n_out: # Checking if it is output
-                    active = True 
 
                 new_node = Node(n_id, op_float, active=active)
-                new_node.add_inputs([Graph.rng.uniform() for _ in range(op_arity)])
+
+                if n_id >= n_in:
+                    new_node.add_inputs([Graph.rng.uniform() for _ in range(op_arity)])
                 
                 self.nodes[new_node.id] = new_node
+
+            self.active_graph()
             
 
     def set_inputs(self, input_values):
@@ -55,26 +55,16 @@ class Graph:
         for i in range(self.n_in):
             self.nodes[i].value = input_values[i]
 
-    # this function is mostly for testing purposes
-    def _add_node(self, n_id, value = None, operation = None, col_num = 1):
-        if operation == None and value == None:
-            operation = Graph.rng.uniform()
-        new_node = Node(n_id, operation, value)
-        self.nodes[new_node.id] = new_node
-        return new_node.id
-
     def reset_graph_value(self):
-        for n_id in self.nodes:
+        for n_id in range(self.n_in, self.total_nodes): # reseting values for non-input nodes
             n = self.nodes[n_id]
-            if n.col_num != 0:
-                n.value = None
-                n.active = False
-        for n_id in self.columns[-1]:
-            self.activate_node(n_id)
+            n.value = None
+            n.active = False
+        self.active_graph()
     
     def operate(self, input_values):
         self.set_inputs(input_values)
-        results = [self.get_node_value(out) for out in self.columns[-1]]
+        results = [self.get_node_value(out) for out in range(self.n_in+self.n_middle, self.total_nodes)]
         self.reset_graph_value()
         return results
 
@@ -84,29 +74,29 @@ class Graph:
             return node.value
 
         inputs = [self.get_node_value(int(x*node.id)) for x in node.inputs]
-        if len(inputs) != node.operation.arity:
-            print("something went wrong")
-
+        
         op_index = int(node.operation*len(self.available_operations))
         operation = self.available_operations[op_index]
+        
+        if len(inputs) != operation.arity:
+            print("sInput size does not match the arity of the operation")
+
         node.value = operation(*inputs)
 
         return node.value
 
-    # # TODO: check if its bottleneck, if it is, change to one liner 
-    # def nodes_eligible_for_mutation(self, only_active):
-    #     nodes = []
-    #     for n_id in self.nodes:
-    #         if self.nodes[n_id].col_num != 0 and (not only_active or self.nodes[n_id].active):
-    #             nodes.append(n_id)
-    #     return nodes
+    def nodes_eligible_for_mutation(self, only_active):
+        return [n for n in self.nodes[self.n_in:] if not only_active or n.active]
 
-    # # percentage in [0, 1]
-    # def probabilistic_mutation(self, percentage, only_active = False):
-    #     possible_nodes = self.nodes_eligible_for_mutation(only_active)
-    #     for n_id in possible_nodes:
-    #         if Graph.rng.rand() <= percentage:
-    #             self.mutate_node_gene(n_id)
+    def probabilistic_mutation(self, percentage, only_active = False):
+        possible_nodes = self.nodes_eligible_for_mutation(only_active)
+        for n in possible_nodes:
+            #mutating the connections
+            for k, v in enumerate(n.inputs):
+                n.inputs[k] = Graph.rng.uniform() if Graph.rng.rand() <= percentage else v
+            # mutating the operation
+            if Graph.rng.rand() <= percentage:
+                self.mutate_operation(n)
 
     # def point_mutation(self, n_nodes, only_active = False):
     #     possible_nodes = self.nodes_eligible_for_mutation(only_active)
@@ -114,106 +104,110 @@ class Graph:
     #     for n_id in nodes_to_mutate:
     #         self.mutate_node_gene(n_id)
 
-    # def mutate_node_gene(self, node_id):
-    #     node = self.nodes[node_id]
-    #     n_genes = len(node.inputs) + 1 # n connections genes plus the operation gene
-    #     mutation = Graph.rng.randint(0, n_genes)
+    def mutate_operation(self, node):
 
-    #     if mutation < len(node.inputs): # mutates the connection
-    #         previous_cols = self.possible_connections_per_col[node.col_num]
-    #         node.inputs[mutation] = Graph.rng.choice(previous_cols)
-    #     else: # mutates the operation
-    #         self.mutate_operation(node_id)
+        op_index = int(node.operation*len(self.available_operations))
+        old_op = self.available_operations[op_index]
 
-    # def mutate_operation(self, node_id):
-    #     node = self.nodes[node_id]
-    #     possible_ops = [op for op in self.available_operations if op != node.operation]
-    #     new_op = Graph.rng.choice(possible_ops)
+        node.operation = Graph.rng.uniform()
+        op_index = int(node.operation*len(self.available_operations))
+        new_op = self.available_operations[op_index]
 
-    #     # in this case we should add connections
-    #     if new_op.arity > node.operation.arity: 
-    #         inputs_to_add = new_op.arity - node.operation.arity
-    #         previous_cols = self.possible_connections_per_col[node.col_num]
-    #         inodes_idlist = Graph.rng.choice(previous_cols, inputs_to_add, replace=False)                    
-    #         node.add_inputs(inodes_idlist)
-    #     # in this case we should remove connections    
-    #     elif new_op.arity < node.operation.arity:
-    #         inputs_to_remove = node.operation.arity - new_op.arity
-    #         inodes_idlist = Graph.rng.choice(node.inputs, inputs_to_remove, replace=False)
-    #         node.remove_inputs(inodes_idlist)
+        # in this case we should add connections
+        if new_op.arity > old_op.arity:
+            new_inputs = [Graph.rng.uniform() for _ in range(new_op.arity - old_op.arity)]
+            node.add_inputs(new_inputs)
+
+        # in this case we should remove connections    
+        elif new_op.arity < old_op.arity:
+            qtd = old_op.arity - new_op.arity
+            inputts_to_remove = Graph.rng.choice(node.inputs, qtd, replace=False)
+            node.remove_inputs(inputts_to_remove)
             
-    #     node.operation = new_op
     
     def clone_graph(self):
         clone = Graph(self.n_in, self.n_out, self.n_middle, self.available_operations, initialize=False)
 
-        for n_id, n in self.nodes.items():
+        for n in self.nodes:
             new_node = Node(n.id, n.operation, n.value, n.active)
             new_node.add_inputs(n.inputs)
-            clone.nodes[n_id] = new_node
+            clone.nodes[n.id] = new_node
 
         clone.reset_graph_value()
         return clone
     
+    def active_graph(self):
+        for n_id in range(self.n_in+self.n_middle, self.total_nodes):
+            self.activate_node(n_id)
+
     def activate_node(self, node_id):
         n = self.nodes[node_id]
         n.active = True
-        for i in n.inputs:
+        aux = [int(x*n.id) for x in n.inputs]
+        for i in aux:
             self.activate_node(i)
 
-    def draw_graph(self, only_active=True):
-        plt.rcParams["figure.figsize"] = (15, 20)
-        graph = nx.Graph()
-        pos = {}
-        labels = {}
-        color_dict = {
-            0: "tab:purple",
-            1: "tab:red",
-            3: "tab:olive",
-            2: "tab:orange",
-            4: "tab:green",
-            5: "tab:blue",
-        }
+    # this function is mostly for testing purposes
+    def _add_node(self, n_id, value=None, operation=None):
+        if operation == None and value == None:
+            operation = Graph.rng.uniform()
+        new_node = Node(n_id, operation, value)
+        self.nodes[new_node.id] = new_node
+        return new_node.id
 
+    # def draw_graph(self, only_active=True):
+    #     plt.rcParams["figure.figsize"] = (15, 20)
+    #     graph = nx.Graph()
+    #     pos = {}
+    #     labels = {}
+    #     color_dict = {
+    #         0: "tab:purple",
+    #         1: "tab:red",
+    #         3: "tab:olive",
+    #         2: "tab:orange",
+    #         4: "tab:green",
+    #         5: "tab:blue",
+    #     }
 
-        col_num = len(self.columns) - 1
-        for col in reversed(self.columns):
-            row = 0
-            for n_id in col:
-                node = self.nodes[n_id]
-                if only_active and not node.active:
-                    continue
-                pos[node.id] = (col_num, row)
+    #     col_num = len(self.columns) - 1
+    #     for col in reversed(self.columns):
+    #         row = 0
+    #         for n_id in col:
+    #             node = self.nodes[n_id]
+    #             if only_active and not node.active:
+    #                 continue
+    #             pos[node.id] = (col_num, row)
 
-                if col_num == 0:
-                    labels[node.id] = "In_" + str(row)
-                elif col_num == len(self.columns)-1:
-                    labels[node.id] = "Out_" + str(row)
-                elif node.operation != None:
-                    labels[node.id] = node.operation.string
+    #             if col_num == 0:
+    #                 labels[node.id] = "In_" + str(row)
+    #             elif col_num == len(self.columns)-1:
+    #                 labels[node.id] = "Out_" + str(row)
+    #             elif node.operation != None:
+    #                 labels[node.id] = node.operation.string
 
-                graph.add_node(node.id)    
-                for input in node.inputs:
-                    graph.add_edge(input, node.id, color=color_dict[col_num%len(color_dict)])
-        
-                row += 1
-            col_num -= 1
-        
-        options = {
-            "font_size": 12,
-            "node_size": 1500,
-            "node_color": "white",
-            "edgecolors": "black",
-            "edge_color": nx.get_edge_attributes(graph,'color').values(),
-            "linewidths": 2,
-            "width": 2,
-            "labels": labels,
-            "pos": pos
-        }
-        nx.draw_networkx(graph, **options)
+    #             graph.add_node(node.id)
+    #             for input in node.inputs:
+    #                 graph.add_edge(
+    #                     input, node.id, color=color_dict[col_num % len(color_dict)])
 
-        # Set margins for the axes so that nodes aren't clipped
-        ax = plt.gca()
-        ax.margins(0.20)
-        plt.axis("off")
-        plt.show()
+    #             row += 1
+    #         col_num -= 1
+
+    #     options = {
+    #         "font_size": 12,
+    #         "node_size": 1500,
+    #         "node_color": "white",
+    #         "edgecolors": "black",
+    #         "edge_color": nx.get_edge_attributes(graph, 'color').values(),
+    #         "linewidths": 2,
+    #         "width": 2,
+    #         "labels": labels,
+    #         "pos": pos
+    #     }
+    #     nx.draw_networkx(graph, **options)
+
+    #     # Set margins for the axes so that nodes aren't clipped
+    #     ax = plt.gca()
+    #     ax.margins(0.20)
+    #     plt.axis("off")
+    #     plt.show()
