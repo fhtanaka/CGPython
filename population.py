@@ -20,34 +20,31 @@ class Population:
         self, 
         population_size: int,
         n_in: int, 
-        n_out: int, 
-        n_row: int, 
-        n_col: int, 
-        levels_back: int,
-        mutation_strategy: str,
+        n_out: int,
+        n_middle: int,
         fitness_func: Callable[[Graph], float],
         minimize_fitness: bool = False,
-        point_mut_qnt: int = 1,
-        prob_mut_chance: float = 0.2,
-        mutate_active_only: bool = True,
+        mutate_active_only: bool = False,
+        mutation_strategy: str = "prob",
+        prob_mut_chance: float = 0.1,
         ):
         
         # self.n_champions = n_champions
         # self.gens = generations
+
         self.population_size = population_size
         self.fitness_func = fitness_func
         self.minimize_fitness = minimize_fitness
 
-        if mutation_strategy != "point" and  mutation_strategy != "prob":
+        if mutation_strategy != "prob":
             raise NameError("Mutation strategy should be \"point\" or \"prob\" ")
         self.mutation_strategy = mutation_strategy
-        self.point_mut_qnt = point_mut_qnt             
         self.prob_mut_chance = prob_mut_chance
         self.mutate_active = mutate_active_only
 
         self.indvs: List[Graph] = []
         for _ in range(population_size): 
-            indv = Graph(n_in, n_out, n_row, n_col, levels_back, self.operations)
+            indv = Graph(n_in, n_out, n_middle, self.operations)
             self.indvs.append(indv)
     
     def iterate_one_plus_lambda(self, n_champions, fitness_modifier):
@@ -68,11 +65,8 @@ class Population:
             for parent in champions:
                 parent.reset_graph_value()
                 indv = parent.clone_graph()
-                if self.mutation_strategy == "point":
-                    indv.point_mutation(self.point_mut_qnt, self.mutate_active)
-                elif self.mutation_strategy == "prob":
-                    indv.probabilistic_mutation(
-                        self.prob_mut_chance, self.mutate_active)
+                if self.mutation_strategy == "prob":
+                    indv.probabilistic_mutation(self.prob_mut_chance, self.mutate_active)
                 new_population.append(indv)
 
         self.indvs = new_population
@@ -86,15 +80,13 @@ class Population:
             fitness_modifier = -1
 
         fit_achieved = False
-        for i in range(generations):
-            if report:
-                print("generation ", i)
+        for i in range(generations):            
             best_fitness = compare_fit
             for ind in self.indvs:
                 fitness = self.fitness_func(ind)
                 ind.fitness = fitness
-                if report:
-                    print(ind.id, " fit: ", fitness)
+                # if report:
+                #     print(ind.id, " fit: ", fitness)
                 if self.minimize_fitness:
                     if fitness < best_fitness:
                         best_fitness = fitness
@@ -105,8 +97,8 @@ class Population:
                         best_fitness = fitness
                         if fitness >= goal_fit:
                             fit_achieved = True
-            if report:
-                print("Best fitness of gen: ", best_fitness)
+            if report and i%100 == 0:
+                print(f"Best fitness of gen {i}: {best_fitness}")
             if fit_achieved:
                 break
             self.iterate_one_plus_lambda(n_champions, fitness_modifier)
