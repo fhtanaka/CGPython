@@ -20,3 +20,6 @@ class Node:
         for r in ids_to_remove:
             if r in self.inputs:
                 self.inputs.remove(r)
+
+    def decode_inputs(self):
+        return [int(x*self.id) for x in self.inputs]

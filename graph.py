@@ -32,21 +32,21 @@ class Graph:
         
         if initialize:
             for n_id in range(self.total_nodes):
-                op_float = Graph.rng.uniform()
-                op_index = int(op_float*len(self.available_operations))
-                op_arity = self.available_operations[op_index].arity
+                op_value = Graph.rng.uniform()
+                op = self.decode_operation(op_value)
 
-                active = False
-
-                new_node = Node(n_id, op_float, active=active)
+                new_node = Node(n_id, op_value, active=False)
 
                 if n_id >= n_in:
-                    new_node.add_inputs([Graph.rng.uniform() for _ in range(op_arity)])
+                    new_node.add_inputs([Graph.rng.uniform() for _ in range(op.arity)])
                 
                 self.nodes[new_node.id] = new_node
 
             self.active_graph()
             
+    def decode_operation(self, op_value):
+        op_index = int(op_value*len(self.available_operations))
+        return self.available_operations[op_index]
 
     def set_inputs(self, input_values):
         if len(input_values) != self.n_in:
@@ -73,10 +73,9 @@ class Graph:
         if node.value is not None:
             return node.value
 
-        inputs = [self.get_node_value(int(x*node.id)) for x in node.inputs]
+        inputs = [self.get_node_value(x) for x in node.decode_inputs()]
         
-        op_index = int(node.operation*len(self.available_operations))
-        operation = self.available_operations[op_index]
+        operation = self.decode_operation(node.operation)
         
         if len(inputs) != operation.arity:
             print("sInput size does not match the arity of the operation")
@@ -106,12 +105,10 @@ class Graph:
 
     def mutate_operation(self, node):
 
-        op_index = int(node.operation*len(self.available_operations))
-        old_op = self.available_operations[op_index]
+        old_op = self.decode_operation(node.operation)
 
         node.operation = Graph.rng.uniform()
-        op_index = int(node.operation*len(self.available_operations))
-        new_op = self.available_operations[op_index]
+        new_op = self.decode_operation(node.operation)
 
         # in this case we should add connections
         if new_op.arity > old_op.arity:
@@ -143,8 +140,7 @@ class Graph:
     def activate_node(self, node_id):
         n = self.nodes[node_id]
         n.active = True
-        aux = [int(x*n.id) for x in n.inputs]
-        for i in aux:
+        for i in n.decode_inputs():
             self.activate_node(i)
 
     # this function is mostly for testing purposes
