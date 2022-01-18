@@ -80,35 +80,27 @@ class Population:
 
     def one_plus_lamda(self, generations: int, n_champions: int, goal_fit: float, report=False):
 
-        fitness_modifier = 1
+        fit_mod = 1
         compare_fit = float('-inf')
         if self.minimize_fitness:
             compare_fit = float('inf')
-            fitness_modifier = -1
+            fit_mod = -1
 
-        fit_achieved = False
         for i in range(generations):            
             best_fitness = compare_fit
             for ind in self.indvs:
                 fitness = self.fitness_func(ind)
                 ind.fitness = fitness
-                # if report:
-                #     print(ind.id, " fit: ", fitness)
-                if self.minimize_fitness:
-                    if fitness < best_fitness:
-                        best_fitness = fitness
-                        if fitness <= goal_fit:
-                            fit_achieved = True
-                else:
-                    if fitness > best_fitness:
-                        best_fitness = fitness
-                        if fitness >= goal_fit:
-                            fit_achieved = True
+                if fit_mod * fitness > fit_mod * best_fitness:
+                    best_fitness = fitness
+
             if report and i%100 == 0:
                 print(f"Best fitness of gen {i}: {best_fitness}")
-            if fit_achieved:
+            
+            if fit_mod*fitness >= fit_mod*goal_fit:
                 break
-            self.iterate_one_plus_lambda(n_champions, fitness_modifier)
+            
+            self.iterate_one_plus_lambda(n_champions, fit_mod)
 
         print("Finished execution")
         print("Total generations: {}".format(i))
