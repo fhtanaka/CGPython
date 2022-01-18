@@ -162,3 +162,41 @@ class Population:
         child_node.add_inputs(inputs)
 
         return child_node
+
+    def graph_species_delta(self, g1: Graph, g2: Graph):
+        if g1.total_nodes != g2.total_nodes:
+            raise AttributeError("Graphs should have the same number of nodes when calculating especies delta")
+        delta = 0
+        g1.active_graph()
+        g2.active_graph()
+        for n1, n2 in zip(g1.nodes, g2.nodes):
+            n_diff = self.node_difference(n1, n2)
+            n_active_diff = self.node_activation_difference(n1, n2)
+            delta += n_diff + n_active_diff
+        
+        return delta
+            
+    def node_activation_difference(self, n1: Node, n2: Node):
+        if n1.active and n2.active:
+            return self.b1
+        if not n1.active and not n2.active:
+            return self.b3
+        return self.b2
+
+    def node_difference(self, n1: Node, n2: Node):
+        n_diff = 0
+
+
+        for g1, g2 in itertools.zip_longest(n1.inputs, n2.inputs):
+            if g1 == None:
+                n_diff += max(abs(1-g2), abs(g2))
+            elif g2 == None:
+                n_diff += max(abs(1-g1), abs(g1))
+            else:
+                n_diff += abs(g1-g2)        
+        n_diff *= self.c2
+
+        if self.get_operation(n1.operation) != self.get_operation(n2.operation):
+            n_diff += self.c1 ##############
+
+        return n_diff
