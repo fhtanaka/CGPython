@@ -32,12 +32,16 @@ class Graph:
         
         if initialize:
             for n_id in range(self.total_nodes):
-                op_value = Graph.rng.uniform()
-                op = self.decode_operation(op_value)
+                op_value = None
+                if n_in <= n_id < n_in + n_middle: # if it is a middle node
+                    op_value = Graph.rng.uniform()
 
                 new_node = Node(n_id, op_value, active=False)
 
-                if n_id >= n_in:
+                if n_in + n_middle <= n_id: # if it is an output node add a single input
+                    new_node.add_inputs([Graph.rng.uniform()])
+                elif n_in <= n_id:
+                    op = self.decode_operation(op_value)
                     new_node.add_inputs([Graph.rng.uniform() for _ in range(op.arity)])
                 
                 self.nodes[new_node.id] = new_node
@@ -75,6 +79,9 @@ class Graph:
 
         inputs = [self.get_node_value(x) for x in node.decode_inputs()]
         
+        if node.operation == None:
+            return inputs[0]  
+
         operation = self.decode_operation(node.operation)
         
         if len(inputs) != operation.arity:
@@ -104,6 +111,8 @@ class Graph:
     #         self.mutate_node_gene(n_id)
 
     def mutate_operation(self, node):
+        if node.operation is None:
+            return
 
         old_op = self.decode_operation(node.operation)
 

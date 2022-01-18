@@ -54,17 +54,18 @@ def main():
         population_size=8,
         n_in = 2,
         n_out = 2,
-        n_middle = 4,
+        n_middle = 6,
         fitness_func = lambda x: fitness_func(x, tests),
         minimize_fitness = True,
         prob_mut_chance = .1,
         mutate_active_only = False
     )
-    profile = cProfile.Profile()
-    profile.runcall(lambda: population.one_plus_lamda(10000, 2, 0.1, True))
-    ps = pstats.Stats(profile)
-    ps.print_stats()
-    print()
+    population.one_plus_lamda(10000, 2, 0.1, True)
+    # profile = cProfile.Profile()
+    # profile.runcall(lambda: population.one_plus_lamda(10000, 2, 0.1, True))
+    # ps = pstats.Stats(profile)
+    # ps.print_stats()
+    # print()
 
 
 if __name__ == "__main__":

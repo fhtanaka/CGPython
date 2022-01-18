@@ -29,6 +29,7 @@ class Population:
         mutate_active_only: bool = False,
         mutation_strategy: str = "prob",
         prob_mut_chance: float = 0.1,
+        stagnation: int = 500,
         ):
         
         # self.n_champions = n_champions
@@ -37,6 +38,10 @@ class Population:
         self.population_size = population_size
         self.fitness_func = fitness_func
         self.minimize_fitness = minimize_fitness
+
+        self.stagnation = stagnation
+        if stagnation is None:
+            self.stagnation = float('inf')
 
         if mutation_strategy != "prob":
             raise NameError("Mutation strategy should be \"prob\" ")
@@ -49,11 +54,15 @@ class Population:
         self.n_middle = n_middle
         self.total_genes = n_in + n_out + n_middle
 
-        self.indvs: List[Graph] = []
-        for _ in range(population_size): 
-            indv = Graph(n_in, n_out, n_middle, self.operations)
-            self.indvs.append(indv)
+        self.indvs: List[Graph] = self.create_individuals()
     
+    def create_individuals(self):
+        indvs: List[Graph] = []
+        for _ in range(self.population_size): 
+            g = Graph(self.n_in, self.n_out, self.n_middle, self.operations)
+            indvs.append(g)
+        return indvs
+
     def iterate_one_plus_lambda(self, n_champions, fitness_modifier):
         # This order the indvs first by ID (lesser IDs first) and then by fitness
         # Since these sorts are stable, the indvs at the end of the array are the champions
@@ -82,29 +91,45 @@ class Population:
 
         fit_mod = 1
         compare_fit = float('-inf')
+        global_best_fitness = float('-inf')
         if self.minimize_fitness:
             compare_fit = float('inf')
             fit_mod = -1
+            global_best_fitness = float('inf')
 
+        stagnation_count = 0
         for i in range(generations):            
-            best_fitness = compare_fit
+            gen_best_fitness = compare_fit
             for ind in self.indvs:
                 fitness = self.fitness_func(ind)
                 ind.fitness = fitness
-                if fit_mod * fitness > fit_mod * best_fitness:
-                    best_fitness = fitness
+                if fit_mod * fitness > fit_mod * gen_best_fitness:
+                    gen_best_fitness = fitness
 
-            if report and i%100 == 0:
-                print(f"Best fitness of gen {i}: {best_fitness}")
+
+            if fit_mod*gen_best_fitness > fit_mod*global_best_fitness:
+                global_best_fitness = gen_best_fitness
+                stagnation_count = 0
             
-            if fit_mod*fitness >= fit_mod*goal_fit:
+            if fit_mod*gen_best_fitness >= fit_mod*goal_fit:
                 break
-            
-            self.iterate_one_plus_lambda(n_champions, fit_mod)
+
+            if report and i % 100 == 0:
+                print(f"Best fitness of gen {i}: {gen_best_fitness}")
+
+            if stagnation_count > self.stagnation:
+                print(f"Generation {i}: Fitness stagnated, reseting population")
+                stagnation_count = 0
+                global_best_fitness = compare_fit
+                self.indvs = self.create_individuals()
+            else: 
+                self.iterate_one_plus_lambda(n_champions, fit_mod)
+            stagnation_count += 1
+
 
         print("Finished execution")
         print("Total generations: {}".format(i))
-        print("Best Fitness: {}".format(best_fitness))
+        print("Best Fitness: {}".format(global_best_fitness))
     
     def get_best_indvs(self, n):
         self.indvs.sort(key=lambda x: (x.fitness * self.minimize_fitness, x.id))
