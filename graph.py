@@ -13,10 +13,9 @@ def cte_op(x):
 cte = Operation(arity=1, operation=cte_op, string="x")
 
 class Graph:
-    rng = np.random
     id_counter = itertools.count().__next__
 
-    def __init__(self, n_in: int, n_out: int, n_middle: int, available_operations: List[Operation] =[cte], initialize: bool = True):
+    def __init__(self, n_in: int, n_out: int, n_middle: int, available_operations: List[Operation] =[cte], initialize: bool = True, rng = np.random):
         self.id = self.id_counter()
         
 
@@ -29,20 +28,21 @@ class Graph:
 
         self.available_operations = available_operations
         self.fitness: int = 0
+        self.rng = rng
         
         if initialize:
             for n_id in range(self.total_nodes):
                 op_value = None
                 if n_in <= n_id < n_in + n_middle: # if it is a middle node
-                    op_value = Graph.rng.uniform()
+                    op_value = self.rng.uniform()
 
                 new_node = Node(n_id, op_value, active=False)
 
                 if n_in + n_middle <= n_id: # if it is an output node add a single input
-                    new_node.add_inputs([Graph.rng.uniform()])
+                    new_node.add_inputs([self.rng.uniform()])
                 elif n_in <= n_id:
                     op = self.decode_operation(op_value)
-                    new_node.add_inputs([Graph.rng.uniform() for _ in range(op.arity)])
+                    new_node.add_inputs([self.rng.uniform() for _ in range(op.arity)])
                 
                 self.nodes[new_node.id] = new_node
 
@@ -99,14 +99,14 @@ class Graph:
         for n in possible_nodes:
             #mutating the connections
             for k, v in enumerate(n.inputs):
-                n.inputs[k] = Graph.rng.uniform() if Graph.rng.rand() <= percentage else v
+                n.inputs[k] = self.rng.uniform() if self.rng.rand() <= percentage else v
             # mutating the operation
-            if Graph.rng.rand() <= percentage:
+            if self.rng.rand() <= percentage:
                 self.mutate_operation(n)
 
     # def point_mutation(self, n_nodes, only_active = False):
     #     possible_nodes = self.nodes_eligible_for_mutation(only_active)
-    #     nodes_to_mutate = Graph.rng.choice(possible_nodes, n_nodes, replace=False)
+    #     nodes_to_mutate = self.rng.choice(possible_nodes, n_nodes, replace=False)
     #     for n_id in nodes_to_mutate:
     #         self.mutate_node_gene(n_id)
 
@@ -116,23 +116,23 @@ class Graph:
 
         old_op = self.decode_operation(node.operation)
 
-        node.operation = Graph.rng.uniform()
+        node.operation = self.rng.uniform()
         new_op = self.decode_operation(node.operation)
 
         # in this case we should add connections
         if new_op.arity > old_op.arity:
-            new_inputs = [Graph.rng.uniform() for _ in range(new_op.arity - old_op.arity)]
+            new_inputs = [self.rng.uniform() for _ in range(new_op.arity - old_op.arity)]
             node.add_inputs(new_inputs)
 
         # in this case we should remove connections    
         elif new_op.arity < old_op.arity:
             qtd = old_op.arity - new_op.arity
-            inputts_to_remove = Graph.rng.choice(node.inputs, qtd, replace=False)
+            inputts_to_remove = self.rng.choice(node.inputs, qtd, replace=False)
             node.remove_inputs(inputts_to_remove)
             
     
     def clone_graph(self):
-        clone = Graph(self.n_in, self.n_out, self.n_middle, self.available_operations, initialize=False)
+        clone = Graph(self.n_in, self.n_out, self.n_middle, self.available_operations, initialize=False, rng=self.rng)
 
         for n in self.nodes:
             new_node = Node(n.id, n.operation, n.value, n.active)
@@ -155,7 +155,7 @@ class Graph:
     # this function is mostly for testing purposes
     def _add_node(self, n_id, value=None, operation=None):
         if operation == None and value == None:
-            operation = Graph.rng.uniform()
+            operation = self.rng.uniform()
         new_node = Node(n_id, operation, value)
         self.nodes[new_node.id] = new_node
         return new_node.id

@@ -1,4 +1,5 @@
 import itertools
+import numpy as np
 from graph import Graph
 from node import Node
 from operation import Operation 
@@ -11,7 +12,7 @@ def order_by_fitness(fitness_modifier):
     return func
 
 class Population:
-
+    rng = np.random
     operations: List[Operation] = []
     @staticmethod
     def add_operation(arity, func, string):
@@ -63,7 +64,7 @@ class Population:
             indvs.append(g)
         return indvs
 
-    def iterate_one_plus_lambda(self, n_champions, fitness_modifier):
+    def one_plus_lambda(self, n_champions, fitness_modifier):
         # This order the indvs first by ID (lesser IDs first) and then by fitness
         # Since these sorts are stable, the indvs at the end of the array are the champions
         self.indvs.sort(key=order_by_fitness(fitness_modifier))
@@ -87,7 +88,35 @@ class Population:
 
         self.indvs = new_population
 
-    def one_plus_lamda(self, generations: int, n_champions: int, goal_fit: float, report=False):
+    def tournament_selection(self, fitness_modifier, elitism, n_children, crossover_rate, mutation_rate, tournament_size):
+        # This order the indvs first by ID (lesser IDs first) and then by fitness
+        # Since these sorts are stable, the indvs at the end of the array are the champions
+        self.indvs.sort(key=order_by_fitness(fitness_modifier))
+        champions = self.indvs[-1*elitism:]
+
+        new_population: List[Graph] = []
+        for parent in champions:
+            # I think this reset is unnecessary but it is here just to make sure
+            parent.reset_graph_value()
+            new_population.append(parent)
+        
+        for _ in range(n_children):
+            tourney = Population.rng.choice(self.indvs, tournament_size, replace=False).tolist()
+            tourney.sort(key=order_by_fitness(fitness_modifier))
+            indv = None
+
+            if Population.rng.rand() <= crossover_rate:
+                indv, _ = self.traditional_crossover(tourney[-1], tourney[-2])
+            else:
+                indv = tourney[-1].clone_graph()
+
+            if self.mutation_strategy == "prob":
+                indv.probabilistic_mutation(mutation_rate, self.mutate_active)
+            
+            new_population.append(indv)
+        self.indvs = new_population
+
+    def run(self, generations: int, n_champions: int, goal_fit: float, report=False):
 
         fit_mod = 1
         compare_fit = float('-inf')
@@ -106,6 +135,8 @@ class Population:
                 if fit_mod * fitness > fit_mod * gen_best_fitness:
                     gen_best_fitness = fitness
 
+            if report and i % 100 == 0:
+                print(f"Best fitness of gen {i}: {gen_best_fitness}")
 
             if fit_mod*gen_best_fitness > fit_mod*global_best_fitness:
                 global_best_fitness = gen_best_fitness
@@ -114,17 +145,15 @@ class Population:
             if fit_mod*gen_best_fitness >= fit_mod*goal_fit:
                 break
 
-            if report and i % 100 == 0:
-                print(f"Best fitness of gen {i}: {gen_best_fitness}")
-
             if stagnation_count > self.stagnation:
                 print(f"Generation {i}: Fitness stagnated, reseting population")
                 stagnation_count = 0
                 global_best_fitness = compare_fit
                 self.indvs = self.create_individuals()
             else: 
-                self.iterate_one_plus_lambda(n_champions, fit_mod)
-            stagnation_count += 1
+                # self.one_plus_lambda(n_champions, fit_mod)
+                self.tournament_selection(fit_mod, 2, 48, .5, self.prob_mut_chance, 5)
+                stagnation_count += 1
 
 
         print("Finished execution")
@@ -166,14 +195,16 @@ class Population:
             else:
                 inputs.append(((1 - r) * g1) + (r * g2))
 
-        op_value = ((1 - r) * n1.operation) + (r * n2.operation)
-        op = self.get_operation(op_value)
+        op_value = None
+        if n1.operation != None and n2.operation != None:
+            op_value = ((1 - r) * n1.operation) + (r * n2.operation)
+            op = self.get_operation(op_value)
 
-        if len(inputs) < op.arity: # Adding more inputs if necessary
-            for _ in range(op.arity-len(inputs)):
-                inputs.append(rng.uniform())
-        elif len(inputs) > op.arity: # removing inputs if necessary
-            inputs = inputs[:op.arity]
+            if len(inputs) < op.arity: # Adding more inputs if necessary
+                for _ in range(op.arity-len(inputs)):
+                    inputs.append(rng.uniform())
+            elif len(inputs) > op.arity: # removing inputs if necessary
+                inputs = inputs[:op.arity]
 
         child_node = Node(n_id, op_value)
         child_node.add_inputs(inputs)

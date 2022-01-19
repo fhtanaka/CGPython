@@ -14,7 +14,7 @@ invert = lambda x: -x
 
 seed = 2002
 n_function_evaluations = 100
-Graph.rng = np.random.RandomState(seed)
+Population.rng = np.random.RandomState(seed)
 
 Population.add_operation(arity=1, func=constant, string="x")
 Population.add_operation(arity=1, func=increment, string="x+1")
@@ -60,7 +60,7 @@ def main():
         prob_mut_chance = .1,
         mutate_active_only = False
     )
-    population.one_plus_lamda(10000, 2, 0.1, True)
+    population.run(10000, 2, 0.1, True)
     # profile = cProfile.Profile()
     # profile.runcall(lambda: population.one_plus_lamda(10000, 2, 0.1, True))
     # ps = pstats.Stats(profile)

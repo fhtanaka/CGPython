@@ -20,7 +20,7 @@ increment_op = Operation(1, increment, "x+1")
 invert_op = Operation(1, invert, "-x")
 
 seed = 2002
-Graph.rng = np.random.RandomState(seed)
+Population.rng = np.random.RandomState(seed)
 Population.add_operation(arity=1, func=constant, string="x")
 Population.add_operation(arity=1, func=increment, string="x+1")
 Population.add_operation(arity=1, func=invert, string="-x")
@@ -35,7 +35,8 @@ def test_get_node_value():
         n_out=5,
         n_middle=0,
         available_operations=Population.operations,
-        initialize=False)
+        initialize=False,
+        rng=Population.rng)
 
     _ = g._add_node(0, 5)
     _ = g._add_node(1, 10)
@@ -74,7 +75,8 @@ def test_graph_construction():
         n_in = 5,
         n_out = 4,
         n_middle = 9,
-        available_operations = Population.operations)
+        available_operations = Population.operations,
+        rng=Population.rng)
 
     inputs = [4, 2, -5 , 1 ,0]
     result = indv.operate(inputs)
@@ -89,7 +91,8 @@ def test_clone():
         n_in=3,
         n_out=3,
         n_middle=9,
-        available_operations=Population.operations)
+        available_operations=Population.operations,
+        rng=Population.rng)
     clone = g.clone_graph()
     for n in g.nodes:
         clone_node = clone.nodes[n.id]
@@ -104,7 +107,8 @@ def test_draw():
         n_in = 3,
         n_out = 3,
         n_middle = 9,
-        available_operations = Population.operations)
+        available_operations = Population.operations, 
+        rng=Population.rng)
     g.draw_graph()
 
 def main():
