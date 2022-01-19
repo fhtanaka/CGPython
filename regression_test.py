@@ -51,7 +51,7 @@ def create_tests(n):
 def main():
     tests = create_tests(n_function_evaluations)
     population = Population(
-        population_size=8,
+        population_size=50,
         n_in = 2,
         n_out = 2,
         n_middle = 6,
