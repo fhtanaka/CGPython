@@ -34,12 +34,11 @@ def tournament_selection_iteration(
         new_population.append(parent)
 
     for _ in range(pop.population_size - elitism):
-        tourney = Population.rng.choice(
-            pop.indvs, tournament_size, replace=False).tolist()
+        tourney = pop.rng.choice(pop.indvs, tournament_size, replace=False).tolist()
         tourney.sort(key=order_by_fitness(mod))
         indv = None
 
-        if Population.rng.rand() <= crossover_rate:
+        if pop.rng.rand() <= crossover_rate:
             indv, _ = pop.traditional_crossover(tourney[-1], tourney[-2])
         else:
             indv = tourney[-1].clone_graph()
@@ -178,11 +177,11 @@ def tournament_selection(
 
     mutate_active_only: bool = False,
     mutation_rate: float = 0.1,
-    elitism: int = 0,
+    elitism: int = 1,
     crossover_rate: float = .5,
     tournament_size: int = 2,
 ):
-    def f(pop): return tournament_selection_iteration(
+    f = lambda pop: tournament_selection_iteration(
         pop,
         minimize_fitness,
         mutate_active_only,

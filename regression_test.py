@@ -56,36 +56,9 @@ def main():
         n_out = 2,
         n_middle = 6)
 
-    # tournament_selection(
-    #     population= population,
-    #     generations=10000,
-    #     goal_fit=.1,
-    #     fitness_func=lambda x: fitness_func(x, tests),
-    #     minimize_fitness=True,
-    #     stagnation=100,
-    #     report=True,
-    #     mutate_active_only=False,
-    #     mutation_rate=0.1,
-    #     elitism=0,
-    #     crossover_rate=.5,
-    #     tournament_size=5,
-    # )
-    # one_plus_lambda(
-    #     population=population,
-    #     generations=10000,
-    #     goal_fit=.1,
-    #     fitness_func=lambda x: fitness_func(x, tests),
-    #     minimize_fitness=True,
-    #     stagnation=100,
-    #     report=True,
-    #     mutate_active_only=False,
-    #     mutation_rate=0.1,
-    #     n_champions=1
-    # )
-    profile = cProfile.Profile()
-    profile.runcall(lambda:     tournament_selection(
-        population=population,
-        generations=25,
+    tournament_selection(
+        population= population,
+        generations=100,
         goal_fit=.1,
         fitness_func=lambda x: fitness_func(x, tests),
         minimize_fitness=True,
@@ -93,13 +66,47 @@ def main():
         report=True,
         mutate_active_only=False,
         mutation_rate=0.1,
-        elitism=0,
+        elitism=2,
         crossover_rate=.5,
         tournament_size=5,
-    ))
-    ps = pstats.Stats(profile)
-    ps.print_stats()
-    print()
+    )
+
+    population = Population(
+        population_size=50,
+        n_in=2,
+        n_out=2,
+        n_middle=6)
+        
+    one_plus_lambda(
+        population=population,
+        generations=100,
+        goal_fit=.1,
+        fitness_func=lambda x: fitness_func(x, tests),
+        minimize_fitness=True,
+        stagnation=100,
+        report=True,
+        mutate_active_only=False,
+        mutation_rate=0.1,
+        n_champions=1
+    )
+    # profile = cProfile.Profile()
+    # profile.runcall(lambda:     tournament_selection(
+    #     population=population,
+    #     generations=25,
+    #     goal_fit=.1,
+    #     fitness_func=lambda x: fitness_func(x, tests),
+    #     minimize_fitness=True,
+    #     stagnation=100,
+    #     report=True,
+    #     mutate_active_only=False,
+    #     mutation_rate=0.1,
+    #     elitism=2,
+    #     crossover_rate=.5,
+    #     tournament_size=5,
+    # ))
+    # ps = pstats.Stats(profile)
+    # ps.print_stats()
+    # print()
 
 
 if __name__ == "__main__":
