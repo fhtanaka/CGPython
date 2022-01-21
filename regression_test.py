@@ -1,3 +1,4 @@
+from evolution_strategies import one_plus_lambda, tournament_selection
 from population import Population
 import numpy as np
 from graph import Graph
@@ -31,7 +32,6 @@ def f2_target(x, y):
     return (x)*(y)*x
 
 def fitness_func(individual: Graph, tests):
-
     fitness = 0
     for t in tests:
         pred1, pred2 = individual.operate([t[0][0], t[0][1]])
@@ -54,15 +54,56 @@ def main():
         population_size=50,
         n_in = 2,
         n_out = 2,
-        n_middle = 6,
-        fitness_func = lambda x: fitness_func(x, tests),
-        minimize_fitness = True,
-        prob_mut_chance = .1,
-        mutate_active_only = False
+        n_middle = 6)
+
+    tournament_selection(
+        population= population,
+        generations=100,
+        goal_fit=.1,
+        fitness_func=lambda x: fitness_func(x, tests),
+        minimize_fitness=True,
+        stagnation=100,
+        report=True,
+        mutate_active_only=False,
+        mutation_rate=0.1,
+        elitism=2,
+        crossover_rate=.5,
+        tournament_size=5,
     )
-    population.run(10000, 2, 0.1, True)
+
+    population = Population(
+        population_size=50,
+        n_in=2,
+        n_out=2,
+        n_middle=6)
+        
+    one_plus_lambda(
+        population=population,
+        generations=100,
+        goal_fit=.1,
+        fitness_func=lambda x: fitness_func(x, tests),
+        minimize_fitness=True,
+        stagnation=100,
+        report=True,
+        mutate_active_only=False,
+        mutation_rate=0.1,
+        n_champions=1
+    )
     # profile = cProfile.Profile()
-    # profile.runcall(lambda: population.one_plus_lamda(10000, 2, 0.1, True))
+    # profile.runcall(lambda:     tournament_selection(
+    #     population=population,
+    #     generations=25,
+    #     goal_fit=.1,
+    #     fitness_func=lambda x: fitness_func(x, tests),
+    #     minimize_fitness=True,
+    #     stagnation=100,
+    #     report=True,
+    #     mutate_active_only=False,
+    #     mutation_rate=0.1,
+    #     elitism=2,
+    #     crossover_rate=.5,
+    #     tournament_size=5,
+    # ))
     # ps = pstats.Stats(profile)
     # ps.print_stats()
     # print()
