@@ -25,30 +25,12 @@ class Population:
         n_in: int, 
         n_out: int,
         n_middle: int,
-        fitness_func: Callable[[Graph], float],
-        minimize_fitness: bool = False,
-        mutate_active_only: bool = False,
-        mutation_strategy: str = "prob",
-        prob_mut_chance: float = 0.1,
-        stagnation: int = 500,
         ):
         
         # self.n_champions = n_champions
         # self.gens = generations
 
         self.population_size = population_size
-        self.fitness_func = fitness_func
-        self.minimize_fitness = minimize_fitness
-
-        self.stagnation = stagnation
-        if stagnation is None:
-            self.stagnation = float('inf')
-
-        if mutation_strategy != "prob":
-            raise NameError("Mutation strategy should be \"prob\" ")
-        self.mutation_strategy = mutation_strategy
-        self.prob_mut_chance = prob_mut_chance
-        self.mutate_active = mutate_active_only
 
         self.n_in = n_in
         self.n_out = n_out
@@ -63,102 +45,6 @@ class Population:
             g = Graph(self.n_in, self.n_out, self.n_middle, self.operations)
             indvs.append(g)
         return indvs
-
-    def one_plus_lambda(self, n_champions, fitness_modifier):
-        # This order the indvs first by ID (lesser IDs first) and then by fitness
-        # Since these sorts are stable, the indvs at the end of the array are the champions
-        self.indvs.sort(key=order_by_fitness(fitness_modifier))
-        champions = self.indvs[-1*n_champions:]
-
-        new_population: List[Graph] = []
-        children_per_parent = int(self.population_size/len(champions))
-
-        for parent in champions:
-            # I think this reset is unnecessary but it is here just to make sure
-            parent.reset_graph_value()
-            new_population.append(parent)
-
-        for _ in range(children_per_parent):
-            for parent in champions:
-                parent.reset_graph_value()
-                indv = parent.clone_graph()
-                if self.mutation_strategy == "prob":
-                    indv.probabilistic_mutation(self.prob_mut_chance, self.mutate_active)
-                new_population.append(indv)
-
-        self.indvs = new_population
-
-    def tournament_selection(self, fitness_modifier, elitism, n_children, crossover_rate, mutation_rate, tournament_size):
-        # This order the indvs first by ID (lesser IDs first) and then by fitness
-        # Since these sorts are stable, the indvs at the end of the array are the champions
-        self.indvs.sort(key=order_by_fitness(fitness_modifier))
-        champions = self.indvs[-1*elitism:]
-
-        new_population: List[Graph] = []
-        for parent in champions:
-            # I think this reset is unnecessary but it is here just to make sure
-            parent.reset_graph_value()
-            new_population.append(parent)
-        
-        for _ in range(n_children):
-            tourney = Population.rng.choice(self.indvs, tournament_size, replace=False).tolist()
-            tourney.sort(key=order_by_fitness(fitness_modifier))
-            indv = None
-
-            if Population.rng.rand() <= crossover_rate:
-                indv, _ = self.traditional_crossover(tourney[-1], tourney[-2])
-            else:
-                indv = tourney[-1].clone_graph()
-
-            if self.mutation_strategy == "prob":
-                indv.probabilistic_mutation(mutation_rate, self.mutate_active)
-            
-            new_population.append(indv)
-        self.indvs = new_population
-
-    def run(self, generations: int, n_champions: int, goal_fit: float, report=False):
-
-        fit_mod = 1
-        compare_fit = float('-inf')
-        global_best_fitness = float('-inf')
-        if self.minimize_fitness:
-            compare_fit = float('inf')
-            fit_mod = -1
-            global_best_fitness = float('inf')
-
-        stagnation_count = 0
-        for i in range(generations):            
-            gen_best_fitness = compare_fit
-            for ind in self.indvs:
-                fitness = self.fitness_func(ind)
-                ind.fitness = fitness
-                if fit_mod * fitness > fit_mod * gen_best_fitness:
-                    gen_best_fitness = fitness
-
-            if report and i % 100 == 0:
-                print(f"Best fitness of gen {i}: {gen_best_fitness}")
-
-            if fit_mod*gen_best_fitness > fit_mod*global_best_fitness:
-                global_best_fitness = gen_best_fitness
-                stagnation_count = 0
-            
-            if fit_mod*gen_best_fitness >= fit_mod*goal_fit:
-                break
-
-            if stagnation_count > self.stagnation:
-                print(f"Generation {i}: Fitness stagnated, reseting population")
-                stagnation_count = 0
-                global_best_fitness = compare_fit
-                self.indvs = self.create_individuals()
-            else: 
-                # self.one_plus_lambda(n_champions, fit_mod)
-                self.tournament_selection(fit_mod, 2, 48, .5, self.prob_mut_chance, 5)
-                stagnation_count += 1
-
-
-        print("Finished execution")
-        print("Total generations: {}".format(i))
-        print("Best Fitness: {}".format(global_best_fitness))
     
     def get_best_indvs(self, n):
         self.indvs.sort(key=lambda x: (x.fitness * self.minimize_fitness, x.id))
