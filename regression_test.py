@@ -56,9 +56,10 @@ def main():
         n_out = 2,
         n_middle = 6)
 
+    print("######################## Starting Tournament selection with crossover #############################")
     tournament_selection(
         population= population,
-        generations=100,
+        generations=10000,
         goal_fit=.1,
         fitness_func=lambda x: fitness_func(x, tests),
         minimize_fitness=True,
@@ -77,9 +78,10 @@ def main():
         n_out=2,
         n_middle=6)
         
+    print("\n\n\n######################## Starting 1+lambda with only mutation #############################")
     one_plus_lambda(
         population=population,
-        generations=100,
+        generations=10000,
         goal_fit=.1,
         fitness_func=lambda x: fitness_func(x, tests),
         minimize_fitness=True,

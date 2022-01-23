@@ -1,7 +1,48 @@
+from collections import namedtuple
+from copy import deepcopy
 from xmlrpc.client import Boolean
 from graph import Graph
 from population import Population
 from typing import Callable, List
+
+c1 = 1
+c2 = 1
+b1 = 2
+b2 = 1
+b3 = .5
+species_threshold = 24
+Specie = namedtuple('Specie', ['representant', 'members'])
+
+def separate_species(pop: Population, species_arr: List[Specie]):
+
+    for k, v in enumerate(species_arr):
+        species_arr[k] = v._replace(members=[])
+
+    for indv in pop.indvs:
+        has_species = False
+        for k, v in enumerate(species_arr):
+            rep = v.representant
+            delta = pop.graph_species_delta(indv, rep, c1, c2, b1, b2, b3)
+            if delta <= species_threshold:
+                has_species = True
+                species_arr[k].members.append(indv)
+                break
+        if not has_species:
+            sp = Specie(indv, [indv])
+            species_arr.append(sp)
+
+    new_species_arr = []
+    for sp in species_arr:
+        if len(sp.members) > 0:
+            new_rep = pop.rng.choice(sp.members)
+            sp = sp._replace(representant=new_rep.clone_graph())
+            new_species_arr.append(sp)
+
+    species_arr = new_species_arr
+
+    return species_arr
+
+
 
 def order_by_fitness(fitness_modifier):
     def func(x: Graph):
@@ -25,7 +66,10 @@ def tournament_selection_iteration(
     # This order the indvs first by ID (lesser IDs first) and then by fitness
     # Since these sorts are stable, the indvs at the end of the array are the champions
     pop.indvs.sort(key=order_by_fitness(mod))
+
     champions = pop.indvs[-1*elitism:]
+    if elitism == 0:
+        champions=[]
 
     new_population: List[Graph] = []
     for parent in champions:
@@ -91,7 +135,7 @@ def run(
     stagnation,
     report
 ):
-
+    species_arr: List[Specie] = []
     fit_mod = 1
     global_best_fitness = float('-inf')
     if minimize_fitness:
@@ -108,7 +152,8 @@ def run(
                 gen_best_fitness = fitness
 
         if report and i % 10 == 0:
-            print(f"Best fitness of gen {i}: {gen_best_fitness}")
+            species_arr = separate_species(pop, species_arr)
+            print(f"Gen {i}\t Best fitness: {gen_best_fitness}\t Number of species: {len(species_arr)}")
 
         if fit_mod*gen_best_fitness > fit_mod*global_best_fitness:
             global_best_fitness = gen_best_fitness
@@ -127,7 +172,7 @@ def run(
             selection_function(pop)
             stagnation_count += 1
 
-    print("Finished execution")
+    print("\nFinished execution")
     print("Total generations: {}".format(i))
     print("Best Fitness: {}".format(global_best_fitness))
 

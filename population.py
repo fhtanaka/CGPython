@@ -27,9 +27,6 @@ class Population:
         n_middle: int,
         ):
         
-        # self.n_champions = n_champions
-        # self.gens = generations
-
         self.population_size = population_size
 
         self.n_in = n_in
@@ -51,6 +48,8 @@ class Population:
         return self.indvs[-1*n:]
 
     def get_operation(self, op_value):
+        if op_value == None:
+            return None
         op_index = int(op_value*len(self.operations))
         return self.operations[op_index]
 
@@ -97,27 +96,27 @@ class Population:
 
         return child_node
 
-    def graph_species_delta(self, g1: Graph, g2: Graph):
+    def graph_species_delta(self, g1: Graph, g2: Graph, c1, c2, b1, b2, b3):
         if g1.total_nodes != g2.total_nodes:
             raise AttributeError("Graphs should have the same number of nodes when calculating especies delta")
         delta = 0
         g1.active_graph()
         g2.active_graph()
         for n1, n2 in zip(g1.nodes, g2.nodes):
-            n_diff = self.node_difference(n1, n2)
-            n_active_diff = self.node_activation_difference(n1, n2)
+            n_diff = self.node_difference(n1, n2, c1, c2)
+            n_active_diff = self.node_activation_difference(n1, n2, b1, b2, b3)
             delta += n_diff + n_active_diff
         
         return delta
             
-    def node_activation_difference(self, n1: Node, n2: Node):
+    def node_activation_difference(self, n1: Node, n2: Node, b1, b2, b3):
         if n1.active and n2.active:
-            return self.b1
+            return b1
         if not n1.active and not n2.active:
-            return self.b3
-        return self.b2
+            return b3
+        return b2
 
-    def node_difference(self, n1: Node, n2: Node):
+    def node_difference(self, n1: Node, n2: Node, c1, c2):
         n_diff = 0
 
 
@@ -128,9 +127,9 @@ class Population:
                 n_diff += max(abs(1-g1), abs(g1))
             else:
                 n_diff += abs(g1-g2)        
-        n_diff *= self.c2
+        n_diff *= c2
 
         if self.get_operation(n1.operation) != self.get_operation(n2.operation):
-            n_diff += self.c1 ##############
+            n_diff += c1 ##############
 
         return n_diff
