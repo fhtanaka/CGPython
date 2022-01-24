@@ -27,7 +27,7 @@ class Graph:
         self.nodes: List[Node] = [None for _ in range(self.total_nodes)]
 
         self.available_operations = available_operations
-        self.fitness: int = 0
+        self.fitness: float = 0
         self.rng = rng
         
         if initialize:

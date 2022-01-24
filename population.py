@@ -1,3 +1,4 @@
+from collections import namedtuple
 import itertools
 import numpy as np
 from graph import Graph
@@ -5,6 +6,7 @@ from node import Node
 from operation import Operation 
 from typing import Callable, List
 
+Specie = namedtuple('Specie', ['representant', 'members'])
 
 def order_by_fitness(fitness_modifier):
     def func(x: Graph):
@@ -35,6 +37,7 @@ class Population:
         self.total_genes = n_in + n_out + n_middle
 
         self.indvs: List[Graph] = self.create_individuals()
+        self.species_arr: List[Specie] = []
     
     def create_individuals(self):
         indvs: List[Graph] = []
@@ -134,3 +137,29 @@ class Population:
             n_diff += c1 ##############
 
         return n_diff
+
+    def separate_species(self, c1, c2, b1, b2, b3, sp_threshold):
+        for k, v in enumerate(self.species_arr):
+            self.species_arr[k] = v._replace(members=[])
+
+        for indv in self.indvs:
+            has_species = False
+            for k, v in enumerate(self.species_arr):
+                rep = v.representant
+                delta = self.graph_species_delta(indv, rep, c1, c2, b1, b2, b3)
+                if delta <= sp_threshold:
+                    has_species = True
+                    self.species_arr[k].members.append(indv)
+                    break
+            if not has_species:
+                sp = Specie(indv, [indv])
+                self.species_arr.append(sp)
+
+        new_species_arr = []
+        for sp in self.species_arr:
+            if len(sp.members) > 0:
+                new_rep = self.rng.choice(sp.members)
+                sp = sp._replace(representant=new_rep.clone_graph())
+                new_species_arr.append(sp)
+
+        self.species_arr = new_species_arr
