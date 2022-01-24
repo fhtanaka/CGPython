@@ -7,10 +7,10 @@ from typing import Callable, List
 
 c1 = 1
 c2 = 1
-b1 = 2
-b2 = 1
-b3 = .5
-species_threshold = 24
+b1 = 1
+b2 = .5
+b3 = .25
+species_threshold = 12
 Specie = namedtuple('Specie', ['representant', 'members'])
 
 def separate_species(pop: Population, species_arr: List[Specie]):

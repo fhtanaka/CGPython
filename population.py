@@ -119,15 +119,16 @@ class Population:
     def node_difference(self, n1: Node, n2: Node, c1, c2):
         n_diff = 0
 
-
         for g1, g2 in itertools.zip_longest(n1.inputs, n2.inputs):
             if g1 == None:
                 n_diff += max(abs(1-g2), abs(g2))
             elif g2 == None:
                 n_diff += max(abs(1-g1), abs(g1))
             else:
-                n_diff += abs(g1-g2)        
-        n_diff *= c2
+                n_diff += abs(g1-g2)
+
+        n_inputs = max(1, len(n1.inputs), len(n2.inputs)) # Put 1 to avoid division by 0
+        n_diff = c2*n_diff/n_inputs
 
         if self.get_operation(n1.operation) != self.get_operation(n2.operation):
             n_diff += c1 ##############
