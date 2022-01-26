@@ -129,7 +129,7 @@ dmypy.json
 .pyre/
 
 # jupyter notebooks
-*.ipynb
+testing.ipynb
 
 .vscode/
 

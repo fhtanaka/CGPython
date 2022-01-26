@@ -1,5 +1,3 @@
-from xmlrpc.client import Boolean
-
 import numpy as np
 from graph import Graph
 from population import Population
@@ -12,21 +10,82 @@ b2 = .5
 b3 = .25
 species_threshold = .5
 
-def explicit_fit_sharing(pop: Population):
+def explicit_fit_sharing(pop: Population, minimize_fitness: bool):
     pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
     for sp in pop.species_arr:
         for indv in sp.members:
-            indv.fitness /= len(sp.members)
+            if minimize_fitness:
+                indv.fitness *= len(sp.members)
+            else:
+                indv.fitness /= len(sp.members)
 
 def order_by_fitness(fitness_modifier):
     def func(x: Graph):
         return (x.fitness * fitness_modifier, x.id)
     return func
 
+def run(
+    pop: Population,
+    selection_function,
+    fitness_func,
+    generations,
+    goal_fit,
+    minimize_fitness,
+    fit_share,
+    stagnation,
+    stag_preservation,
+    report
+):
+    fit_mod = 1
+    global_best_fitness = float('-inf')
+    if minimize_fitness:
+        fit_mod = -1
+        global_best_fitness = float('inf')
+
+    stagnation_count = 0
+    stag_preservation *= -1
+
+    for i in range(generations):
+        if stagnation_count > stagnation:
+            print(f"Generation {i}: Fitness stagnated, reseting population")
+            stagnation_count = 0
+            pop.indvs.sort(key=order_by_fitness(fit_mod))
+            pop.indvs[:stag_preservation] = pop.create_individuals()[:stag_preservation]
+
+        for ind in pop.indvs:
+            ind.fitness = fitness_func(ind)
+
+        if fit_share:
+            explicit_fit_sharing(pop, minimize_fitness)
+
+        gen_best_fitness = float('-inf') * fit_mod
+        for ind in pop.indvs:
+            if fit_mod * ind.fitness > fit_mod * gen_best_fitness:
+                gen_best_fitness = ind.fitness
+
+        if report is not None and i % report == 0:
+            deltas = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
+            print(f"Gen {i}\t Best fitness: {gen_best_fitness}\t Number of species: {len(pop.species_arr)}")
+            # print(f"Deltas \t min: {min(deltas)}\t max: {max(deltas)}\t avg: {np.average(deltas)} \n")
+
+        if fit_mod*gen_best_fitness > fit_mod*global_best_fitness:
+            global_best_fitness = gen_best_fitness
+            stagnation_count = 0
+
+        if fit_mod*gen_best_fitness >= fit_mod*goal_fit:
+            break
+
+        selection_function(pop)
+        stagnation_count += 1
+
+    print("\nFinished execution")
+    print("Total generations: {}".format(i))
+    print("Best Fitness: {}".format(global_best_fitness))
+
 def tournament_selection_iteration(
     pop: Population, 
-    minimize_fit: Boolean, 
-    mutate_active_only: Boolean,
+    minimize_fit: bool, 
+    mutate_active_only: bool,
     mutation_rate: float,
     elitism: int,
     crossover_rate: float,
@@ -46,10 +105,10 @@ def tournament_selection_iteration(
         champions=[]
 
     new_population: List[Graph] = []
-    for parent in champions:
+    for c in champions:
         # I think this reset is unnecessary but it is here just to make sure
-        parent.reset_graph_value()
-        new_population.append(parent)
+        c.reset_graph_value()
+        new_population.append(c)
 
     for _ in range(pop.population_size - elitism):
         tourney = pop.rng.choice(pop.indvs, tournament_size, replace=False).tolist()
@@ -68,9 +127,9 @@ def tournament_selection_iteration(
 
 def one_plus_lambda_iteration(
     pop: Population,
-    minimize_fit: Boolean,
+    minimize_fit: bool,
     n_champions,
-    mutate_active_only: Boolean,
+    mutate_active_only: bool,
     mutation_rate: float,
 ):
     mod = 1
@@ -99,59 +158,6 @@ def one_plus_lambda_iteration(
 
     pop.indvs = new_population
 
-def run(
-    pop: Population,
-    selection_function,
-    fitness_func,
-    generations,
-    goal_fit,
-    minimize_fitness,
-    stagnation,
-    stag_preservation,
-    report
-):
-    fit_mod = 1
-    global_best_fitness = float('-inf')
-    if minimize_fitness:
-        fit_mod = -1
-        global_best_fitness = float('inf')
-
-    stagnation_count = 0
-    stag_preservation *= -1
-    for i in range(generations):
-        if stagnation_count > stagnation:
-            print(f"Generation {i}: Fitness stagnated, reseting population")
-            stagnation_count = 0
-            pop.indvs.sort(key=order_by_fitness(fit_mod))
-            pop.indvs[:stag_preservation] = pop.create_individuals()[:stag_preservation]
-
-        gen_best_fitness = float('-inf') * fit_mod
-        for ind in pop.indvs:
-            fitness = fitness_func(ind)
-            ind.fitness = fitness
-            if fit_mod * fitness > fit_mod * gen_best_fitness:
-                gen_best_fitness = fitness
-
-        if report is not None and i % report == 0:
-            deltas = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
-            print(f"Gen {i}\t Best fitness: {gen_best_fitness}\t Number of species: {len(pop.species_arr)}")
-            # print(f"Deltas \t min: {min(deltas)}\t max: {max(deltas)}\t avg: {np.average(deltas)} \n")
-
-        if fit_mod*gen_best_fitness > fit_mod*global_best_fitness:
-            global_best_fitness = gen_best_fitness
-            stagnation_count = 0
-        
-        if fit_mod*gen_best_fitness >= fit_mod*goal_fit:
-            break
-
-        explicit_fit_sharing(pop)
-        selection_function(pop)
-        stagnation_count += 1
-
-    print("\nFinished execution")
-    print("Total generations: {}".format(i))
-    print("Best Fitness: {}".format(global_best_fitness))
-
 def one_plus_lambda(
     population: Population,
 
@@ -159,12 +165,13 @@ def one_plus_lambda(
     goal_fit: float,
     fitness_func: Callable[[Graph], float],
     minimize_fitness: bool = False,
+    fit_share = True,
     stagnation: int = 100,
     stag_preservation: int = 2,
     report=False,
 
     n_champions: int = 1,
-    mutate_active_only: Boolean = False,
+    mutate_active_only: bool = False,
     mutation_rate: float = .1,
 ):
     f = lambda pop : one_plus_lambda_iteration(
@@ -182,6 +189,7 @@ def one_plus_lambda(
         generations,
         goal_fit,
         minimize_fitness,
+        fit_share,
         stagnation,
         stag_preservation,
         report,
@@ -195,6 +203,7 @@ def tournament_selection(
     goal_fit: float,
     fitness_func: Callable[[Graph], float],
     minimize_fitness: bool = False,
+    fit_share = True,
     stagnation: int = 100,
     stag_preservation: int = 2,
     report=None,
@@ -222,6 +231,7 @@ def tournament_selection(
         generations,
         goal_fit,
         minimize_fitness,
+        fit_share,
         stagnation,
         stag_preservation,
         report,
