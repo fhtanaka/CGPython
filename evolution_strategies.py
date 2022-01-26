@@ -1,6 +1,6 @@
-from collections import namedtuple
-from copy import deepcopy
 from xmlrpc.client import Boolean
+
+import numpy as np
 from graph import Graph
 from population import Population
 from typing import Callable, List
@@ -10,7 +10,7 @@ c2 = 1
 b1 = 1
 b2 = .5
 b3 = .25
-species_threshold = 12
+species_threshold = .5
 
 def explicit_fit_sharing(pop: Population):
     pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
@@ -31,7 +31,7 @@ def tournament_selection_iteration(
     elitism: int,
     crossover_rate: float,
     tournament_size: int,
-    ):
+):
 
     mod = 1
     if minimize_fit:
@@ -107,6 +107,7 @@ def run(
     goal_fit,
     minimize_fitness,
     stagnation,
+    stag_preservation,
     report
 ):
     fit_mod = 1
@@ -116,7 +117,14 @@ def run(
         global_best_fitness = float('inf')
 
     stagnation_count = 0
-    for i in range(generations):            
+    stag_preservation *= -1
+    for i in range(generations):
+        if stagnation_count > stagnation:
+            print(f"Generation {i}: Fitness stagnated, reseting population")
+            stagnation_count = 0
+            pop.indvs.sort(key=order_by_fitness(fit_mod))
+            pop.indvs[:stag_preservation] = pop.create_individuals()[:stag_preservation]
+
         gen_best_fitness = float('-inf') * fit_mod
         for ind in pop.indvs:
             fitness = fitness_func(ind)
@@ -124,9 +132,10 @@ def run(
             if fit_mod * fitness > fit_mod * gen_best_fitness:
                 gen_best_fitness = fitness
 
-        if report and i % 10 == 0:
-            pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
+        if report is not None and i % report == 0:
+            deltas = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
             print(f"Gen {i}\t Best fitness: {gen_best_fitness}\t Number of species: {len(pop.species_arr)}")
+            # print(f"Deltas \t min: {min(deltas)}\t max: {max(deltas)}\t avg: {np.average(deltas)} \n")
 
         if fit_mod*gen_best_fitness > fit_mod*global_best_fitness:
             global_best_fitness = gen_best_fitness
@@ -135,15 +144,9 @@ def run(
         if fit_mod*gen_best_fitness >= fit_mod*goal_fit:
             break
 
-        if stagnation_count > stagnation:
-            print(f"Generation {i}: Fitness stagnated, reseting population")
-            stagnation_count = 0
-            global_best_fitness = float('-inf') * fit_mod
-            pop.indvs = pop.create_individuals()
-        else:
-            explicit_fit_sharing(pop)
-            selection_function(pop)
-            stagnation_count += 1
+        explicit_fit_sharing(pop)
+        selection_function(pop)
+        stagnation_count += 1
 
     print("\nFinished execution")
     print("Total generations: {}".format(i))
@@ -157,6 +160,7 @@ def one_plus_lambda(
     fitness_func: Callable[[Graph], float],
     minimize_fitness: bool = False,
     stagnation: int = 100,
+    stag_preservation: int = 2,
     report=False,
 
     n_champions: int = 1,
@@ -179,6 +183,7 @@ def one_plus_lambda(
         goal_fit,
         minimize_fitness,
         stagnation,
+        stag_preservation,
         report,
     )
 
@@ -191,7 +196,8 @@ def tournament_selection(
     fitness_func: Callable[[Graph], float],
     minimize_fitness: bool = False,
     stagnation: int = 100,
-    report=False,
+    stag_preservation: int = 2,
+    report=None,
 
     mutate_active_only: bool = False,
     mutation_rate: float = 0.1,
@@ -217,5 +223,6 @@ def tournament_selection(
         goal_fit,
         minimize_fitness,
         stagnation,
+        stag_preservation,
         report,
     )

@@ -47,7 +47,8 @@ class Population:
         return indvs
     
     def get_best_indvs(self, n):
-        self.indvs.sort(key=lambda x: (x.fitness * self.minimize_fitness, x.id))
+        def f(x): return (x.fitness * self.minimize_fitness, x.id)
+        self.indvs.sort(key=f)
         return self.indvs[-1*n:]
 
     def get_operation(self, op_value):
@@ -99,7 +100,7 @@ class Population:
 
         return child_node
 
-    def graph_species_delta(self, g1: Graph, g2: Graph, c1, c2, b1, b2, b3):
+    def graph_species_delta(self, g1: Graph, g2: Graph, c1, c2, b1, b2, b3, normalize_delta = True):
         if g1.total_nodes != g2.total_nodes:
             raise AttributeError("Graphs should have the same number of nodes when calculating especies delta")
         delta = 0
@@ -110,6 +111,9 @@ class Population:
             n_active_diff = self.node_activation_difference(n1, n2, b1, b2, b3)
             delta += n_diff + n_active_diff
         
+        delta = delta/g1.total_nodes
+        if normalize_delta:
+            delta = delta/(c1+c2)/max(b1, b2, b3)
         return delta
             
     def node_activation_difference(self, n1: Node, n2: Node, b1, b2, b3):
@@ -139,6 +143,7 @@ class Population:
         return n_diff
 
     def separate_species(self, c1, c2, b1, b2, b3, sp_threshold):
+        deltas = []
         for k, v in enumerate(self.species_arr):
             self.species_arr[k] = v._replace(members=[])
 
@@ -147,6 +152,7 @@ class Population:
             for k, v in enumerate(self.species_arr):
                 rep = v.representant
                 delta = self.graph_species_delta(indv, rep, c1, c2, b1, b2, b3)
+                deltas.append(delta)
                 if delta <= sp_threshold:
                     has_species = True
                     self.species_arr[k].members.append(indv)
@@ -163,3 +169,5 @@ class Population:
                 new_species_arr.append(sp)
 
         self.species_arr = new_species_arr
+
+        return deltas
