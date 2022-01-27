@@ -28,6 +28,7 @@ class Graph:
 
         self.available_operations = available_operations
         self.fitness: float = 0
+        self.original_fit: float = 0
         self.rng = rng
         
         if initialize:

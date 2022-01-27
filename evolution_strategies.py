@@ -8,7 +8,7 @@ c2 = 1
 b1 = 1
 b2 = .5
 b3 = .25
-species_threshold = .5
+species_threshold = .8
 
 def explicit_fit_sharing(pop: Population, minimize_fitness: bool):
     pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
@@ -54,6 +54,7 @@ def run(
 
         for ind in pop.indvs:
             ind.fitness = fitness_func(ind)
+            ind.display_fit = ind.fitness
 
         if fit_share:
             explicit_fit_sharing(pop, minimize_fitness)
@@ -63,17 +64,18 @@ def run(
             if fit_mod * ind.fitness > fit_mod * gen_best_fitness:
                 gen_best_fitness = ind.fitness
 
-        if report is not None and i % report == 0:
-            deltas = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
-            print(f"Gen {i}\t Best fitness: {gen_best_fitness}\t Number of species: {len(pop.species_arr)}")
-            # print(f"Deltas \t min: {min(deltas)}\t max: {max(deltas)}\t avg: {np.average(deltas)} \n")
-
         if fit_mod*gen_best_fitness > fit_mod*global_best_fitness:
             global_best_fitness = gen_best_fitness
             stagnation_count = 0
 
         if fit_mod*gen_best_fitness >= fit_mod*goal_fit:
             break
+
+        if report is not None and i % report == 0:
+            deltas = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
+            pop.indvs.sort(key=order_by_fitness(fit_mod))
+            print(f"Gen {i}\t Best fit: {pop.indvs[-1].display_fit}\t Best shared fitness: {gen_best_fitness}\t Number of species: {len(pop.species_arr)}")
+            # print(f"Deltas \t min: {min(deltas)}\t max: {max(deltas)}\t avg: {np.average(deltas)} \n")
 
         selection_function(pop)
         stagnation_count += 1
@@ -102,7 +104,7 @@ def tournament_selection_iteration(
 
     champions = pop.indvs[-1*elitism:]
     if elitism == 0:
-        champions=[]
+        champions = []
 
     new_population: List[Graph] = []
     for c in champions:

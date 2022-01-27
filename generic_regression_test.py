@@ -3,19 +3,40 @@ import dill
 from graph import Graph
 from evolution_strategies import one_plus_lambda, tournament_selection
 from population import Population
+import cProfile
+import pstats
 
 REPORT = 1
 FILENAME = "cache/tourney_cross_spec.pkl"
 
 POP_SIZE = 100
 N_MIDDLE_NODES = 100
-MAX_GENS = 1000
+MAX_GENS = 50
+FIT_SHARE = False
 STAGNATION = 30
 ELITISM = 2
 MUT_ACTIVE_ONLY = False
-MUT_RATE = .1
+MUT_RATE = .2
 CROSSOVER_RATE = .5
-TOURNEY_SIZE = 10
+TOURNEY_SIZE = 20
+
+
+def addition(x, y): return x+y
+def multiplication(x, y): return x*y
+def subtraction(x, y): return x-y
+def constant(x): return x
+def protected_div(x, y): return 1 if y == 0 else x/y
+def increment(x): return x+1
+def invert(x): return -x
+
+Population.add_operation(arity=1, func=constant, string="x")
+Population.add_operation(arity=1, func=increment, string="x+1")
+Population.add_operation(arity=1, func=invert, string="-x")
+Population.add_operation(arity=2, func=addition, string="x+y")
+Population.add_operation(arity=2, func=multiplication, string="x*y")
+Population.add_operation(arity=2, func=subtraction, string="x-y")
+Population.add_operation(arity=2, func=protected_div, string="*x/y")
+Population.rng = np.random.RandomState(10)
 
 def generate_functions():
     n_tests = 100
@@ -30,23 +51,6 @@ def generate_functions():
     tests = create_tests(n_tests, n_inputs, funcs)
 
     return n_inputs, funcs, tests
-
-
-def addition(x, y): return x+y
-def multiplication(x, y): return x*y
-def subtraction(x, y): return x-y
-def constant(x): return x
-def protected_div(x, y): return 1 if y == 0 else x/y
-def increment(x): return x+1
-def invert(x): return -x
-Population.add_operation(arity=1, func=constant, string="x")
-Population.add_operation(arity=1, func=increment, string="x+1")
-Population.add_operation(arity=1, func=invert, string="-x")
-Population.add_operation(arity=2, func=addition, string="x+y")
-Population.add_operation(arity=2, func=multiplication, string="x*y")
-Population.add_operation(arity=2, func=subtraction, string="x-y")
-Population.add_operation(arity=2, func=protected_div, string="*x/y")
-Population.rng = np.random.RandomState(10)
 
 
 def create_tests(n_tests, n_inputs, funcs):
@@ -83,20 +87,41 @@ def main():
         n_middle = N_MIDDLE_NODES
     )
 
-    tournament_selection(
-        population = population,
-        generations = MAX_GENS,
-        goal_fit = .1,
-        fitness_func = fit_func,
-        minimize_fitness = True,
-        stagnation = STAGNATION,
-        report = REPORT,
-        mutate_active_only = MUT_ACTIVE_ONLY,
-        mutation_rate = MUT_RATE,
-        elitism = ELITISM,
-        crossover_rate = CROSSOVER_RATE,
-        tournament_size = TOURNEY_SIZE,
-    )
+    profile = cProfile.Profile()
+    profile.runcall(lambda: tournament_selection(
+        population=population,
+        generations=MAX_GENS,
+        goal_fit=.1,
+        fitness_func=fit_func,
+        minimize_fitness=True,
+        fit_share=FIT_SHARE,
+        stagnation=STAGNATION,
+        report=REPORT,
+        mutate_active_only=MUT_ACTIVE_ONLY,
+        mutation_rate=MUT_RATE,
+        elitism=ELITISM,
+        crossover_rate=CROSSOVER_RATE,
+        tournament_size=TOURNEY_SIZE,
+    ))
+    ps = pstats.Stats(profile)
+    ps.print_stats()
+    print()
+
+    # tournament_selection(
+    #     population = population,
+    #     generations = MAX_GENS,
+    #     goal_fit = .1,
+    #     fitness_func = fit_func,
+    #     minimize_fitness = True,
+    #     fit_share=FIT_SHARE,
+    #     stagnation = STAGNATION,
+    #     report = REPORT,
+    #     mutate_active_only = MUT_ACTIVE_ONLY,
+    #     mutation_rate = MUT_RATE,
+    #     elitism = ELITISM,
+    #     crossover_rate = CROSSOVER_RATE,
+    #     tournament_size = TOURNEY_SIZE,
+    # )
 
     dill.dump(population, open(FILENAME, mode='wb'))
 
