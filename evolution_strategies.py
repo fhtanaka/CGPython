@@ -54,7 +54,7 @@ def run(
 
         for ind in pop.indvs:
             ind.fitness = fitness_func(ind)
-            ind.display_fit = ind.fitness
+            ind.original_fit = ind.fitness
 
         if fit_share:
             explicit_fit_sharing(pop, minimize_fitness, species_threshold)
@@ -74,15 +74,17 @@ def run(
         if report is not None and i % report == 0:
             deltas = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
             pop.indvs.sort(key=order_by_fitness(fit_mod))
-            print(f"gen {i};\t best_fit: {pop.indvs[-1].display_fit};\t best_shared_fit: {gen_best_fitness};\t n_species: {len(pop.species_arr)};\t avg_d: {np.average(deltas)}")
+            print(f"gen {i};\t best_original_fit: {pop.indvs[-1].original_fit};\t best_shared_fit: {gen_best_fitness};\t n_species: {len(pop.species_arr)};\t avg_d: {np.average(deltas)}")
             # print(f"Deltas ;\t min: {min(deltas)};\t max: {max(deltas)}\t avg: {np.average(deltas)} \n")
 
         selection_function(pop)
         stagnation_count += 1
 
+    pop.indvs.sort(key=order_by_fitness(fit_mod))
     print("\nFinished execution")
     print("Total generations: {}".format(i))
-    print("Best Fitness: {}".format(global_best_fitness))
+    print("Best Shared Fitness: {}".format(global_best_fitness))
+    print("Best Original Fitness: {}".format(pop.indvs[-1].original_fit))
 
 def tournament_selection_iteration(
     pop: Population, 
