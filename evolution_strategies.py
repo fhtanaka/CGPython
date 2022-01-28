@@ -8,9 +8,8 @@ c2 = 1
 b1 = 1
 b2 = .5
 b3 = .25
-species_threshold = .8
 
-def explicit_fit_sharing(pop: Population, minimize_fitness: bool):
+def explicit_fit_sharing(pop: Population, minimize_fitness: bool, species_threshold:float):
     pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
     for sp in pop.species_arr:
         for indv in sp.members:
@@ -34,7 +33,8 @@ def run(
     fit_share,
     stagnation,
     stag_preservation,
-    report
+    report,
+    species_threshold
 ):
     fit_mod = 1
     global_best_fitness = float('-inf')
@@ -57,7 +57,7 @@ def run(
             ind.display_fit = ind.fitness
 
         if fit_share:
-            explicit_fit_sharing(pop, minimize_fitness)
+            explicit_fit_sharing(pop, minimize_fitness, species_threshold)
 
         gen_best_fitness = float('-inf') * fit_mod
         for ind in pop.indvs:
@@ -74,8 +74,8 @@ def run(
         if report is not None and i % report == 0:
             deltas = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
             pop.indvs.sort(key=order_by_fitness(fit_mod))
-            print(f"Gen {i}\t Best fit: {pop.indvs[-1].display_fit}\t Best shared fitness: {gen_best_fitness}\t Number of species: {len(pop.species_arr)}")
-            # print(f"Deltas \t min: {min(deltas)}\t max: {max(deltas)}\t avg: {np.average(deltas)} \n")
+            print(f"gen {i};\t best_fit: {pop.indvs[-1].display_fit};\t best_shared_fit: {gen_best_fitness};\t n_species: {len(pop.species_arr)};\t avg_d: {np.average(deltas)}")
+            # print(f"Deltas ;\t min: {min(deltas)};\t max: {max(deltas)}\t avg: {np.average(deltas)} \n")
 
         selection_function(pop)
         stagnation_count += 1
@@ -175,6 +175,8 @@ def one_plus_lambda(
     n_champions: int = 1,
     mutate_active_only: bool = False,
     mutation_rate: float = .1,
+
+    species_threshold:float = .8,
 ):
     f = lambda pop : one_plus_lambda_iteration(
         pop,
@@ -195,6 +197,7 @@ def one_plus_lambda(
         stagnation,
         stag_preservation,
         report,
+        species_threshold,
     )
 
 
@@ -215,6 +218,8 @@ def tournament_selection(
     elitism: int = 1,
     crossover_rate: float = .5,
     tournament_size: int = 2,
+
+    species_threshold: float = .8
 ):
     f = lambda pop: tournament_selection_iteration(
         pop,
@@ -237,4 +242,5 @@ def tournament_selection(
         stagnation,
         stag_preservation,
         report,
+        species_threshold,
     )

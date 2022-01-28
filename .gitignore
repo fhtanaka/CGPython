@@ -134,3 +134,4 @@ testing.ipynb
 .vscode/
 
 *.pkl
+*.txt

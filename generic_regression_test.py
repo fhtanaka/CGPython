@@ -3,23 +3,9 @@ import dill
 from graph import Graph
 from evolution_strategies import one_plus_lambda, tournament_selection
 from population import Population
+from arg_parser import parse_args
 import cProfile
 import pstats
-
-REPORT = 1
-FILENAME = "cache/tourney_cross_spec.pkl"
-
-POP_SIZE = 100
-N_MIDDLE_NODES = 100
-MAX_GENS = 50
-FIT_SHARE = False
-STAGNATION = 30
-ELITISM = 2
-MUT_ACTIVE_ONLY = False
-MUT_RATE = .2
-CROSSOVER_RATE = .5
-TOURNEY_SIZE = 20
-
 
 def addition(x, y): return x+y
 def multiplication(x, y): return x*y
@@ -38,8 +24,8 @@ Population.add_operation(arity=2, func=subtraction, string="x-y")
 Population.add_operation(arity=2, func=protected_div, string="*x/y")
 Population.rng = np.random.RandomState(10)
 
-def generate_functions():
-    n_tests = 100
+
+def generate_functions(n_tests=100):
     n_inputs = 2
 
     def f1(x, y): return x**6 - 2*x**4 + x**2
@@ -77,53 +63,65 @@ def fitness_func(individual: Graph, tests):
 
 
 def main():
-    inputs, funcs, tests = generate_functions()
+    args = parse_args()
+
+    inputs, funcs, tests = generate_functions(args["n_tests"])
     fit_func = lambda x: fitness_func(x, tests)
     
     population = Population(
-        population_size = POP_SIZE,
+        population_size = args["pop_size"],
         n_in = inputs,
         n_out = len(funcs),
-        n_middle = N_MIDDLE_NODES
+        n_middle=args["n_middle_nodes"]
     )
 
-    profile = cProfile.Profile()
-    profile.runcall(lambda: tournament_selection(
+    def t_select(): return tournament_selection(
         population=population,
-        generations=MAX_GENS,
+        generations=args["max_gens"],
         goal_fit=.1,
         fitness_func=fit_func,
         minimize_fitness=True,
-        fit_share=FIT_SHARE,
-        stagnation=STAGNATION,
-        report=REPORT,
-        mutate_active_only=MUT_ACTIVE_ONLY,
-        mutation_rate=MUT_RATE,
-        elitism=ELITISM,
-        crossover_rate=CROSSOVER_RATE,
-        tournament_size=TOURNEY_SIZE,
-    ))
+        fit_share=args["fit_share"],
+        stagnation=args["stagnation"],
+        stag_preservation=args["stag_preservation"],
+        report=args["report"],
+        mutate_active_only=args["mut_active_only"],
+        mutation_rate=args["mut_rate"],
+        elitism=args["elitism"],
+        crossover_rate=args["crossover_rate"],
+        tournament_size=args["tourney_size"],
+        species_threshold=args["species_threshold"],
+    )
+
+    def p_lambda(): return one_plus_lambda(
+        population=population,
+        generations=args["max_gens"],
+        goal_fit=.1,
+        fitness_func=fit_func,
+        minimize_fitness=True,
+        fit_share=args["fit_share"],
+        stagnation=args["stagnation"],
+        stag_preservation=args["stag_preservation"],
+        report=args["report"],
+        n_champions=args["elitism"],
+        mutate_active_only=args["mut_active_only"],
+        mutation_rate=args["mut_rate"],
+        species_threshold=args["species_threshold"],
+    )
+
+    exec_func = t_select
+    if args["selection_method"] == "lambda":
+        exec_func = p_lambda
+
+    profile = cProfile.Profile()
+    profile.runcall(exec_func)
     ps = pstats.Stats(profile)
     ps.print_stats()
     print()
 
-    # tournament_selection(
-    #     population = population,
-    #     generations = MAX_GENS,
-    #     goal_fit = .1,
-    #     fitness_func = fit_func,
-    #     minimize_fitness = True,
-    #     fit_share=FIT_SHARE,
-    #     stagnation = STAGNATION,
-    #     report = REPORT,
-    #     mutate_active_only = MUT_ACTIVE_ONLY,
-    #     mutation_rate = MUT_RATE,
-    #     elitism = ELITISM,
-    #     crossover_rate = CROSSOVER_RATE,
-    #     tournament_size = TOURNEY_SIZE,
-    # )
 
-    dill.dump(population, open(FILENAME, mode='wb'))
+    if args["save_to"] is not None:    
+        dill.dump(population, open(args["save_to"], mode='wb'))
 
 if __name__ == "__main__":
     main()
