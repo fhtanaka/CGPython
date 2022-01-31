@@ -8,7 +8,7 @@ def parse_args():
     report = 1
     pop_size = 100
     n_middle_nodes = 100
-    max_gens = 50
+    max_gens = 1000
     fit_share = True
     stagnation = 30
     elitism = 2

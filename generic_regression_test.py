@@ -31,6 +31,7 @@ def generate_functions(n_tests=100):
     def f1(x, y): return x**6 - 2*x**4 + x**2
     def f2(x, y): return x+y
     def f3(x, y): return y**4 - 2*y**3 + 5*x
+    # def f4(x, y): return x**6 - 2*y*x**4 + y**2
 
     funcs = [f1, f2, f3]
 

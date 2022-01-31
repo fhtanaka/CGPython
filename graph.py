@@ -16,8 +16,8 @@ class Graph:
     id_counter = itertools.count().__next__
 
     def __init__(self, n_in: int, n_out: int, n_middle: int, available_operations: List[Operation] =[cte], initialize: bool = True, rng = np.random):
-        self.id = self.id_counter()
-        
+        self.id: int = self.id_counter()
+        self.species_id: int = -1
 
         self.n_in = n_in
         self.n_out = n_out
@@ -61,6 +61,8 @@ class Graph:
             self.nodes[i].value = input_values[i]
 
     def reset_graph_value(self):
+        self.fitness = 0
+        self.original_fit = 0
         for n_id in range(self.n_in, self.total_nodes): # reseting values for non-input nodes
             n = self.nodes[n_id]
             n.value = None
@@ -134,7 +136,9 @@ class Graph:
     
     def clone_graph(self):
         clone = Graph(self.n_in, self.n_out, self.n_middle, self.available_operations, initialize=False, rng=self.rng)
-
+        clone.species_id = self.species_id
+        clone.fitness = self.fitness
+        clone.original_fit = self.original_fit
         for n in self.nodes:
             new_node = Node(n.id, n.operation, n.value, n.active)
             new_node.add_inputs(n.inputs)

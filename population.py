@@ -5,6 +5,7 @@ from graph import Graph
 from node import Node
 from operation import Operation 
 from typing import Callable, List
+from sklearn.utils import shuffle
 
 Specie = namedtuple('Specie', ['representant', 'members'])
 
@@ -14,7 +15,10 @@ def order_by_fitness(fitness_modifier):
     return func
 
 class Population:
+
     rng = np.random
+    species_id_count = itertools.count().__next__
+
     operations: List[Operation] = []
     @staticmethod
     def add_operation(arity, func, string):
@@ -138,7 +142,7 @@ class Population:
         n_diff = c2*n_diff/n_inputs
 
         if self.get_operation(n1.operation) != self.get_operation(n2.operation):
-            n_diff += c1 ##############
+            n_diff += c1
 
         return n_diff
 
@@ -149,17 +153,20 @@ class Population:
 
         for indv in self.indvs:
             has_species = False
+            self.rng.shuffle(self.species_arr) # Shuffling because there is a bias to select the first specie
             for k, v in enumerate(self.species_arr):
                 rep = v.representant
                 delta = self.graph_species_delta(indv, rep, c1, c2, b1, b2, b3)
                 deltas.append(delta)
                 if delta <= sp_threshold:
                     has_species = True
+                    indv.species_id = rep.species_id 
                     self.species_arr[k].members.append(indv)
                     break
             if not has_species:
+                indv.species_id = self.species_id_count()
                 sp = Specie(indv, [indv])
-                self.species_arr.append(sp)
+                self.species_arr.append(sp) 
 
         new_species_arr = []
         for sp in self.species_arr:

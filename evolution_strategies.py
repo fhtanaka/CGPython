@@ -2,6 +2,7 @@ import numpy as np
 from graph import Graph
 from population import Population
 from typing import Callable, List
+from operator import attrgetter
 
 c1 = 1
 c2 = 1
@@ -18,10 +19,26 @@ def explicit_fit_sharing(pop: Population, minimize_fitness: bool, species_thresh
             else:
                 indv.fitness /= len(sp.members)
 
-def order_by_fitness(fitness_modifier):
-    def func(x: Graph):
-        return (x.fitness * fitness_modifier, x.id)
-    return func
+def update_pop_fitness(pop, fitness_func, fit_share, minimize_fitness, species_threshold):
+    for ind in pop.indvs:
+        ind.fitness = fitness_func(ind)
+        ind.original_fit = ind.fitness
+    if fit_share:
+        explicit_fit_sharing(pop, minimize_fitness, species_threshold)
+
+
+def print_report(gen, champion, pop, species_threshold):
+    print(f"best_in_gen: {gen};\t original_fit: {champion.original_fit:.2f};\t shared_fit: {champion.fitness:.2f};\t specie: {champion.species_id};")
+    
+    pop.species_arr.sort(key=lambda x: x.representant.species_id)
+    print(f"Species ({len(pop.species_arr)}): [", end="")
+    for sp in pop.species_arr:
+        print(f"{sp.representant.species_id}({len(sp.members)})", end=", ")
+    print("]\n")
+    
+    # deltas = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
+    # print(f"Deltas ;\t min: {min(deltas)};\t max: {max(deltas)}\t avg: {np.average(deltas)} \n")
+    # pp.update([[len(pop.species_arr)]])
 
 def run(
     pop: Population,
@@ -37,53 +54,48 @@ def run(
     species_threshold
 ):
     fit_mod = 1
-    global_best_fitness = float('-inf')
+    last_gen_fitness = float('-inf')
     if minimize_fitness:
         fit_mod = -1
-        global_best_fitness = float('inf')
+        last_gen_fitness = float('inf')
 
     stagnation_count = 0
     stag_preservation *= -1
 
     for i in range(generations):
-        if stagnation_count > stagnation:
-            print(f"Generation {i}: Fitness stagnated, reseting population")
+        update_pop_fitness(pop, fitness_func, fit_share, minimize_fitness, species_threshold)
+
+        if minimize_fitness:
+            champion = min(pop.indvs, key=attrgetter('original_fit'))
+        else:
+            champion = max(pop.indvs, key=attrgetter('original_fit'))
+        gen_best_fitness = champion.original_fit
+
+        if fit_mod*gen_best_fitness > fit_mod*last_gen_fitness:
             stagnation_count = 0
-            pop.indvs.sort(key=order_by_fitness(fit_mod))
-            pop.indvs[:stag_preservation] = pop.create_individuals()[:stag_preservation]
+        else:
+            stagnation_count += 1
+        last_gen_fitness = gen_best_fitness
 
-        for ind in pop.indvs:
-            ind.fitness = fitness_func(ind)
-            ind.original_fit = ind.fitness
-
-        if fit_share:
-            explicit_fit_sharing(pop, minimize_fitness, species_threshold)
-
-        gen_best_fitness = float('-inf') * fit_mod
-        for ind in pop.indvs:
-            if fit_mod * ind.fitness > fit_mod * gen_best_fitness:
-                gen_best_fitness = ind.fitness
-
-        if fit_mod*gen_best_fitness > fit_mod*global_best_fitness:
-            global_best_fitness = gen_best_fitness
-            stagnation_count = 0
-
-        if fit_mod*gen_best_fitness >= fit_mod*goal_fit:
+        if fit_mod*gen_best_fitness >= fit_mod*goal_fit or i == generations-1:
             break
 
         if report is not None and i % report == 0:
-            deltas = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
-            pop.indvs.sort(key=order_by_fitness(fit_mod))
-            print(f"gen {i};\t best_original_fit: {pop.indvs[-1].original_fit};\t best_shared_fit: {gen_best_fitness};\t n_species: {len(pop.species_arr)};\t avg_d: {np.average(deltas)}")
-            # print(f"Deltas ;\t min: {min(deltas)};\t max: {max(deltas)}\t avg: {np.average(deltas)} \n")
+            print_report(i, champion, pop, species_threshold)
 
+        if stagnation_count > stagnation:
+            print(f"Generation {i}: Fitness stagnated, reseting population")
+            stagnation_count = 0
+            pop.indvs.sort(key=lambda x: (x.fitness * fit_mod, x.id))
+            pop.indvs[:stag_preservation] = pop.create_individuals()[:stag_preservation]
+            update_pop_fitness(pop, fitness_func, False, minimize_fitness, species_threshold)
+        
         selection_function(pop)
-        stagnation_count += 1
 
-    pop.indvs.sort(key=order_by_fitness(fit_mod))
+    pop.indvs.sort(key=lambda x: (x.fitness * fit_mod, x.id))
     print("\nFinished execution")
     print("Total generations: {}".format(i))
-    print("Best Shared Fitness: {}".format(global_best_fitness))
+    print("Best Shared Fitness: {}".format(pop.indvs[-1].fitness))
     print("Best Original Fitness: {}".format(pop.indvs[-1].original_fit))
 
 def tournament_selection_iteration(
@@ -102,7 +114,7 @@ def tournament_selection_iteration(
 
     # This order the indvs first by ID (lesser IDs first) and then by fitness
     # Since these sorts are stable, the indvs at the end of the array are the champions
-    pop.indvs.sort(key=order_by_fitness(mod))
+    pop.indvs.sort(key=lambda x: (x.fitness * mod, x.id))
 
     champions = pop.indvs[-1*elitism:]
     if elitism == 0:
@@ -116,7 +128,7 @@ def tournament_selection_iteration(
 
     for _ in range(pop.population_size - elitism):
         tourney = pop.rng.choice(pop.indvs, tournament_size, replace=False).tolist()
-        tourney.sort(key=order_by_fitness(mod))
+        tourney.sort(key=lambda x: (x.fitness * mod, x.id))
         indv = None
 
         if pop.rng.rand() <= crossover_rate:
@@ -142,7 +154,7 @@ def one_plus_lambda_iteration(
 
     # This order the indvs first by ID (lesser IDs first) and then by fitness
     # Since these sorts are stable, the indvs at the end of the array are the champions
-    pop.indvs.sort(key=order_by_fitness(mod))
+    pop.indvs.sort(key=lambda x: (x.fitness * mod, x.id))
     champions = pop.indvs[-1*n_champions:]
 
     new_population: List[Graph] = []
