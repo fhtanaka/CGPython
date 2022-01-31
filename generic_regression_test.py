@@ -57,8 +57,8 @@ def fitness_func(individual: Graph, tests):
         graph_out = individual.operate(inputs)
 
         for h, y in zip(graph_out, expected_out):
-            fitness += (y-h)**2
-
+            fitness += abs(y-h)
+    
     return fitness
 
 
