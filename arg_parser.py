@@ -6,20 +6,20 @@ def parse_args():
     # Default Values
     # saving_to = "cache/tourney_cross_spec.pkl"
     report = 1
-    pop_size = 100
+    pop_size = 500
     n_middle_nodes = 100
     max_gens = 1000
     fit_share = True
-    stagnation = 30
+    stagnation = 20
     elitism = 2
     mut_active_only = False
-    mut_rate = .2
-    crossover_rate = .8
-    tourney_size = 20
+    mut_rate = .1
+    crossover_rate = .9
+    tourney_size = 50
     selection_method = "tournament"
     n_tests = 100
     stag_preservation = 2
-    species_threshold = .8
+    species_threshold = .75
 
     parser = argparse.ArgumentParser()
 

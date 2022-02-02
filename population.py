@@ -153,7 +153,7 @@ class Population:
 
         for indv in self.indvs:
             has_species = False
-            self.rng.shuffle(self.species_arr) # Shuffling because there is a bias to select the first specie
+            # self.rng.shuffle(self.species_arr) # Shuffling because there is a bias to select the first specie
             for k, v in enumerate(self.species_arr):
                 rep = v.representant
                 delta = self.graph_species_delta(indv, rep, c1, c2, b1, b2, b3)
