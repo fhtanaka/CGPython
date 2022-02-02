@@ -3,6 +3,7 @@ from graph import Graph
 from population import Population
 from typing import Callable, List
 from operator import attrgetter
+from multiprocessing import Manager, Pool
 
 c1 = 1
 c2 = 1
@@ -29,6 +30,31 @@ def update_pop_fitness(pop, fitness_func, fit_share, minimize_fitness, species_t
     if fit_share:
         explicit_fit_sharing(pop, minimize_fitness, species_threshold)
 
+
+def update_pop_fitness_thread(indvs, fitness_func, results_dict):
+    for ind in indvs:
+        fit = fitness_func(ind)
+        results_dict[ind.id] = fit
+
+
+def parallel_update_pop_fitness(pop, fitness_func, fit_share, minimize_fitness, species_threshold, n_workers):
+    with Manager() as manager:
+        fitness_dict = manager.dict()
+        pool = Pool()
+
+        tasks = []
+        for indvs in np.array_split(pop.indvs, n_workers):
+            tasks.append((indvs, fitness_func, fitness_dict))
+
+        pool.starmap(update_pop_fitness_thread, tasks)
+        pool.close()
+        
+        for ind in pop.indvs:
+            ind.fitness = fitness_dict[ind.id]
+            ind.original_fit = ind.fitness
+
+    if fit_share:
+        explicit_fit_sharing(pop, minimize_fitness, species_threshold)
 
 def print_report(gen, champion, pop, species_threshold):
     # deltas = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
