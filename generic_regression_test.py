@@ -92,6 +92,7 @@ def main():
         crossover_rate=args["crossover_rate"],
         tournament_size=args["tourney_size"],
         species_threshold=args["species_threshold"],
+        n_threads=args["n_threads"],
     )
 
     def p_lambda(): return one_plus_lambda(
@@ -108,6 +109,7 @@ def main():
         mutate_active_only=args["mut_active_only"],
         mutation_rate=args["mut_rate"],
         species_threshold=args["species_threshold"],
+        n_threads=args["n_threads"],
     )
 
     exec_func = t_select

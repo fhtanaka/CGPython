@@ -3,7 +3,7 @@ from graph import Graph
 from population import Population
 from typing import Callable, List
 from operator import attrgetter
-from multiprocessing import Manager, Pool
+from pathos.multiprocessing import ProcessPool
 
 c1 = 1
 c2 = 1
@@ -31,27 +31,26 @@ def update_pop_fitness(pop, fitness_func, fit_share, minimize_fitness, species_t
         explicit_fit_sharing(pop, minimize_fitness, species_threshold)
 
 
-def update_pop_fitness_thread(indvs, fitness_func, results_dict):
+def update_pop_fitness_thread(indvs, fitness_func):
+    results_dict = {}
     for ind in indvs:
         fit = fitness_func(ind)
         results_dict[ind.id] = fit
-
+    return results_dict
 
 def parallel_update_pop_fitness(pop, fitness_func, fit_share, minimize_fitness, species_threshold, n_workers):
-    with Manager() as manager:
-        fitness_dict = manager.dict()
-        pool = Pool()
+    
+    pool = ProcessPool(nodes=n_workers)
+    results = pool.map(update_pop_fitness_thread, np.array_split(pop.indvs, n_workers), [fitness_func for _ in range(n_workers)])
+    
+    fitness_dict = {}
+    for result_dict in results:
+        for k, v in result_dict.items():
+            fitness_dict[k] = v
 
-        tasks = []
-        for indvs in np.array_split(pop.indvs, n_workers):
-            tasks.append((indvs, fitness_func, fitness_dict))
-
-        pool.starmap(update_pop_fitness_thread, tasks)
-        pool.close()
-        
-        for ind in pop.indvs:
-            ind.fitness = fitness_dict[ind.id]
-            ind.original_fit = ind.fitness
+    for ind in pop.indvs:
+        ind.fitness = fitness_dict[ind.id]
+        ind.original_fit = ind.fitness
 
     if fit_share:
         explicit_fit_sharing(pop, minimize_fitness, species_threshold)
@@ -80,7 +79,8 @@ def run(
     stagnation,
     stag_preservation,
     report,
-    species_threshold
+    species_threshold,
+    n_threads = 1,
 ):
     fit_mod = 1
     last_gen_fitness = float('-inf')
@@ -92,7 +92,10 @@ def run(
     stag_preservation *= -1
 
     for i in range(generations+1):
-        update_pop_fitness(pop, fitness_func, fit_share, minimize_fitness, species_threshold)
+        if n_threads > 1:
+            parallel_update_pop_fitness(pop, fitness_func, fit_share, minimize_fitness, species_threshold, n_threads)
+        else:
+            update_pop_fitness(pop, fitness_func, fit_share, minimize_fitness, species_threshold)
 
         if minimize_fitness:
             champion = min(pop.indvs, key=attrgetter('original_fit'))
@@ -220,6 +223,8 @@ def one_plus_lambda(
     mutation_rate: float = .1,
 
     species_threshold:float = .8,
+
+    n_threads=1,
 ):
     f = lambda pop : one_plus_lambda_iteration(
         pop,
@@ -241,6 +246,7 @@ def one_plus_lambda(
         stag_preservation,
         report,
         species_threshold,
+        n_threads,        
     )
 
 
@@ -262,7 +268,9 @@ def tournament_selection(
     crossover_rate: float = .5,
     tournament_size: int = 2,
 
-    species_threshold: float = .8
+    species_threshold: float = .8,
+
+    n_threads = 1,
 ):
     f = lambda pop: tournament_selection_iteration(
         pop,
@@ -286,4 +294,5 @@ def tournament_selection(
         stag_preservation,
         report,
         species_threshold,
+        n_threads,
     )
