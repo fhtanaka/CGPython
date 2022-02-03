@@ -4,10 +4,9 @@ import numpy as np
 from graph import Graph
 from node import Node
 from operation import Operation 
-from typing import Callable, List
+from typing import Callable, Dict, List
 from sklearn.utils import shuffle
-
-Specie = namedtuple('Specie', ['representant', 'members'])
+from specie import Specie
 
 def order_by_fitness(fitness_modifier):
     def func(x: Graph):
@@ -41,8 +40,8 @@ class Population:
         self.total_genes = n_in + n_out + n_middle
 
         self.indvs: List[Graph] = self.create_individuals()
-        self.species_arr: List[Specie] = []
-    
+        self.species_dict: Dict[str, Specie] = {}
+
     def create_individuals(self):
         indvs: List[Graph] = []
         for _ in range(self.population_size): 
@@ -148,33 +147,40 @@ class Population:
 
     def separate_species(self, c1, c2, b1, b2, b3, sp_threshold):
         deltas = []
-        for k, v in enumerate(self.species_arr):
-            self.species_arr[k] = v._replace(members=[])
-
+        for _, sp in self.species_dict.items():
+            sp.remove_members()
+        
         for indv in self.indvs:
             has_species = False
-            # self.rng.shuffle(self.species_arr) # Shuffling because there is a bias to select the first specie
-            for k, v in enumerate(self.species_arr):
-                rep = v.representant
-                delta = self.graph_species_delta(indv, rep, c1, c2, b1, b2, b3)
-                deltas.append(delta)
+            if indv.species_id in self.species_dict:
+                sp = self.species_dict[indv.species_id]
+                delta = self.graph_species_delta(indv,  sp.representant, c1, c2, b1, b2, b3)
                 if delta <= sp_threshold:
                     has_species = True
-                    indv.species_id = rep.species_id 
-                    self.species_arr[k].members.append(indv)
-                    break
+                    indv.species_id = sp.id
+                    sp.add_member(indv)
+                    
             if not has_species:
-                indv.species_id = self.species_id_count()
-                sp = Specie(indv, [indv])
-                self.species_arr.append(sp) 
+                for sp_id, sp in self.species_dict.items():
+                    delta = self.graph_species_delta(indv, sp.representant, c1, c2, b1, b2, b3)
+                    deltas.append(delta)
+                    if delta <= sp_threshold:
+                        has_species = True
+                        indv.species_id = sp_id
+                        sp.add_member(indv)
+                        break
 
-        new_species_arr = []
-        for sp in self.species_arr:
+                if not has_species:
+                    sp = Specie(indv, [indv])
+                    indv.species_id = sp.id
+                    self.species_dict[sp.id] = sp 
+
+        new_species_dict = {}
+        for _, sp in self.species_dict.items():
             if len(sp.members) > 0:
-                new_rep = self.rng.choice(sp.members)
-                sp = sp._replace(representant=new_rep.clone_graph())
-                new_species_arr.append(sp)
+                sp.new_representant_random(self.rng)
+                new_species_dict[sp.id] = sp
 
-        self.species_arr = new_species_arr
+        self.species_dict = new_species_dict
 
         return deltas

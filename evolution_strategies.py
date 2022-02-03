@@ -1,3 +1,4 @@
+from matplotlib import collections
 import numpy as np
 from graph import Graph
 from population import Population
@@ -16,7 +17,7 @@ beta = 2
 
 def explicit_fit_sharing(pop: Population, minimize_fitness: bool, species_threshold:float):
     pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
-    for sp in pop.species_arr:
+    for _, sp in pop.species_dict.items():
         for indv in sp.members:
             if minimize_fitness:
                 indv.fitness = (indv.fitness**alfa) * (len(sp.members)**beta)
@@ -59,14 +60,14 @@ def print_report(gen, champion, pop, species_threshold):
     # deltas = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
     print(f"best_in_gen: {gen};\t original_fit: {champion.original_fit:.2f};\t shared_fit: {champion.fitness:.2f};\t specie: {champion.species_id};")
     
-    pop.species_arr.sort(key=lambda x: x.representant.species_id)
-    print(f"Species ({len(pop.species_arr)}): [", end="")
-    for sp in pop.species_arr:
+    # pop.species_dict.sort(key=lambda x: x.representant.species_id)
+    print(f"Species ({len(pop.species_dict)}): [", end="")
+    for _, sp in sorted(pop.species_dict.items()):
         print(f"{sp.representant.species_id}({len(sp.members)})", end=", ")
     print("]\n")
     
     # print(f"Deltas ;\t min: {min(deltas)};\t max: {max(deltas)}\t avg: {np.average(deltas)} \n")
-    # pp.update([[len(pop.species_arr)]])
+    # pp.update([[len(pop.species_dict)]])
 
 def run(
     pop: Population,
