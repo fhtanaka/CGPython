@@ -145,7 +145,7 @@ class Population:
 
         return n_diff
 
-    def separate_species(self, c1, c2, b1, b2, b3, sp_threshold):
+    def separate_species(self, c1, c2, b1, b2, b3, sp_threshold, age = 1):
         deltas = []
         for _, sp in self.species_dict.items():
             sp.remove_members()
@@ -179,6 +179,7 @@ class Population:
         for _, sp in self.species_dict.items():
             if len(sp.members) > 0:
                 sp.new_representant_random(self.rng)
+                sp.age += age
                 new_species_dict[sp.id] = sp
 
         self.species_dict = new_species_dict

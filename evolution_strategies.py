@@ -1,5 +1,5 @@
-from matplotlib import collections
 import numpy as np
+from diversity_measures import fitness_diversity, structural_diversity
 from graph import Graph
 from population import Population
 from typing import Callable, List
@@ -16,7 +16,7 @@ alfa = 1
 beta = 2
 
 def explicit_fit_sharing(pop: Population, minimize_fitness: bool, species_threshold:float):
-    pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
+    pop.separate_species(c1, c2, b1, b2, b3, species_threshold, 0)
     for _, sp in pop.species_dict.items():
         for indv in sp.members:
             if minimize_fitness:
@@ -57,17 +57,25 @@ def parallel_update_pop_fitness(pop, fitness_func, fit_share, minimize_fitness, 
         explicit_fit_sharing(pop, minimize_fitness, species_threshold)
 
 def print_report(gen, champion, pop, species_threshold):
-    # deltas = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
+    deltas = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
     print(f"best_in_gen: {gen};\t original_fit: {champion.original_fit:.2f};\t shared_fit: {champion.fitness:.2f};\t specie: {champion.species_id};")
     
-    # pop.species_dict.sort(key=lambda x: x.representant.species_id)
-    print(f"Species ({len(pop.species_dict)}): [", end="")
-    for _, sp in sorted(pop.species_dict.items()):
-        print(f"{sp.representant.species_id}({len(sp.members)})", end=", ")
-    print("]\n")
-    
+    fit_div = fitness_diversity(pop, 1000)
+    struc_div = structural_diversity(pop)
+    species_div = len(pop.species_dict)
+    print(f"species_diversity: {species_div}\t; structure_diversity: {struc_div};\t fit_diversity: {fit_div}")
+
+    if species_div < 20:
+        print(f"Species: [", end="")
+        for _, sp in sorted(pop.species_dict.items()):
+            print(f"{sp.representant.species_id} ({sp.age}): {len(sp.members)}", end=", ")
+        print("]")
+    else:
+        print(f"Species: [...]")
+
     # print(f"Deltas ;\t min: {min(deltas)};\t max: {max(deltas)}\t avg: {np.average(deltas)} \n")
     # pp.update([[len(pop.species_dict)]])
+    print()
 
 def run(
     pop: Population,

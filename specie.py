@@ -12,6 +12,7 @@ class Specie:
         self.id: int = self.id_counter()
         self.members = members
         self.representant = representant
+        self.age = 0
     
     def add_member(self, member):
         self.members.append(member)
@@ -26,13 +27,17 @@ class Specie:
         self.members = sorted(self.members, lambda x: rng.random())
 
     def new_representant_random(self, rng):
-        self.representant = rng.choice(self.members)
+        rep = rng.choice(self.members)
+        self.representant = rep.clone_graph() 
 
     def new_representant_highest(self):
-        self.representant = max(self.members, key=attrgetter('original_fit'))
+        rep = max(self.members, key=attrgetter('original_fit'))
+        self.representant = rep.clone_graph() 
 
     def new_representant_lowest(self):
-        self.representant = min(self.members, key=attrgetter('original_fit'))
+        rep = min(self.members, key=attrgetter('original_fit'))
+        self.representant = rep.clone_graph() 
 
     def new_representant_first(self):
-        self.representant = self.members[0]
+        rep = self.members[0]
+        self.representant = rep.clone_graph() 
