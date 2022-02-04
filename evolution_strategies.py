@@ -63,7 +63,7 @@ def print_report(gen, champion, pop, species_threshold):
     fit_div = fitness_diversity(pop, 1000)
     struc_div = structural_diversity(pop)
     species_div = len(pop.species_dict)
-    print(f"species_diversity: {species_div}\t; structure_diversity: {struc_div};\t fit_diversity: {fit_div}")
+    print(f"n_species: {species_div}\t; structure_diversity: {struc_div};\t fit_diversity: {fit_div}")
 
     if species_div < 20:
         print(f"Species: [", end="")
