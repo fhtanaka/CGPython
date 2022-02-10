@@ -1,3 +1,4 @@
+from copyreg import constructor
 from evogym import is_connected, has_actuator, get_full_connectivity, hashable
 from evogym.envs import WalkingFlat
 import struct
@@ -36,7 +37,7 @@ def eval_genome_constraint(robot, robot_dict):
     if validity:
         robot_hash = hashable(robot)
         if robot_hash in robot_dict:
-            validity = False
+            validity = True
         else:
             robot_dict[robot_hash] = True
     return validity
@@ -74,7 +75,7 @@ def calculate_reward(env: WalkingFlat, controller: Graph, n_steps: int):
             break
     return reward
 
-def structure_fitness_func(individual: Graph, structure: Tuple, n_steps: int, controllers: List[Graph], robot_dict):
+def structure_fitness_func(individual: Graph, structure: Tuple, n_steps: int, controllers: Population, robot_dict):
 
     robot = generate_robot(individual, structure)    
 
@@ -86,19 +87,21 @@ def structure_fitness_func(individual: Graph, structure: Tuple, n_steps: int, co
     env.reset()
 
     fitness = []
-    for controller in controllers:
+    for controller in controllers.indvs:
         reward = calculate_reward(env, controller, n_steps)
         fitness.append(reward)
 
     return max(fitness)
 
 
-def controller_fitness_func(individual: Graph, structure: Tuple, n_steps: int, contructors: List[Graph], robot_dict):
+def controller_fitness_func(individual: Graph, structure: Tuple, n_steps: int, contructors: Population, robot_dict):
     fitness = []
-    for c in contructors:
-        robot = generate_robot(c, structure)
+    for builder in contructors.indvs:
+        robot = generate_robot(builder, structure)
+
         if not eval_genome_constraint(robot, robot_dict):
-            return -10000
+            fitness.append(-1000)
+            continue
 
         connections = get_full_connectivity(robot)
         env = WalkingFlat(body=robot, connections=connections)
@@ -132,13 +135,13 @@ def main():
         n_middle=args["n_middle_nodes"]
     )
 
-    def s_fit_func(x): return structure_fitness_func(x, strucure, n_steps, controller_pop.indvs, robot_dict)
+    def s_fit_func(x): return structure_fitness_func(x, strucure, n_steps, controller_pop, robot_dict)
     def ts_select(): return tournament_selection(
         population=structure_pop,
         generations=gens,
         goal_fit=.1,
         fitness_func=s_fit_func,
-        minimize_fitness=True,
+        minimize_fitness=False,
         fit_share=args["fit_share"],
         stagnation=args["stagnation"],
         stag_preservation=args["stag_preservation"],
@@ -152,13 +155,13 @@ def main():
         n_threads=args["n_threads"],
     )
 
-    def c_fit_func(x): return controller_fitness_func(x, strucure, n_steps, structure_pop.indvs, robot_dict)
+    def c_fit_func(x): return controller_fitness_func(x, strucure, n_steps, structure_pop, robot_dict)
     def tc_select(): return tournament_selection(
         population=controller_pop,
         generations=gens,
         goal_fit=.1,
         fitness_func=c_fit_func,
-        minimize_fitness=True,
+        minimize_fitness=False,
         fit_share=args["fit_share"],
         stagnation=args["stagnation"],
         stag_preservation=args["stag_preservation"],
