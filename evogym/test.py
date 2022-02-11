@@ -176,9 +176,15 @@ def main():
     )
 
     for i in range(args["max_gens"]):
-        print(i)
+        print(f"\nGen {i}:")
         ts_select()
+        structure_pop.indvs.sort(key=lambda x: (x.original_fit, x.id))
+        champion = structure_pop.indvs[-1]
+        print(f"Structure  fit({champion.id}): \t{champion.original_fit}")
         tc_select()
+        controller_pop.indvs.sort(key=lambda x: (x.original_fit, x.id))
+        champion = controller_pop.indvs[-1]
+        print(f"Controller fit({champion.id}): \t{champion.original_fit}")
 
 
 if __name__ == "__main__":

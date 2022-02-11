@@ -133,11 +133,11 @@ def run(
         
         selection_function(pop)
 
-    pop.indvs.sort(key=lambda x: (x.fitness * fit_mod, x.id))
-    print("\nFinished execution")
-    print("Total generations: {}".format(i))
-    print("Best Shared Fitness: {}".format(pop.indvs[-1].fitness))
-    print("Best Original Fitness: {}".format(pop.indvs[-1].original_fit))
+    # pop.indvs.sort(key=lambda x: (x.fitness * fit_mod, x.id))
+    # print("\nFinished execution")
+    # print("Total generations: {}".format(i))
+    # print("Best Shared Fitness: {}".format(pop.indvs[-1].fitness))
+    # print("Best Original Fitness: {}".format(pop.indvs[-1].original_fit))
 
 def tournament_selection_iteration(
     pop: Population, 
