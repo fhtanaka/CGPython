@@ -3,7 +3,7 @@ from operator import attrgetter
 
 def fitness_diversity(pop: Population, interval_size: float):
     diversity_dict = {}
-
+    
     for indv in pop.indvs:
         fingerprint = int(indv.original_fit/interval_size)
         diversity_dict[fingerprint] = True

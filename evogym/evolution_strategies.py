@@ -13,7 +13,7 @@ b2 = .75
 b3 = .5
 
 alfa = 1
-beta = 2
+beta = 1
 
 def explicit_fit_sharing(pop: Population, minimize_fitness: bool, species_threshold:float):
     pop.separate_species(c1, c2, b1, b2, b3, species_threshold, 0)
@@ -60,7 +60,7 @@ def print_report(gen, champion, pop, species_threshold):
     deltas = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
     print(f"best_in_gen: {gen};\t original_fit: {champion.original_fit:.2f};\t shared_fit: {champion.fitness:.2f};\t specie: {champion.species_id};")
     
-    fit_div = fitness_diversity(pop, 1000)
+    fit_div = fitness_diversity(pop, 0.1)
     struc_div = structural_diversity(pop)
     species_div = len(pop.species_dict)
     print(f"n_species: {species_div};\t structure_diversity: {struc_div};\t fit_diversity: {fit_div}")
@@ -118,7 +118,7 @@ def run(
             stagnation_count += 1
         last_gen_fitness = gen_best_fitness
 
-        if fit_mod*gen_best_fitness >= fit_mod*goal_fit or i == generations-1:
+        if fit_mod*gen_best_fitness >= fit_mod*goal_fit or i == generations:
             break
 
         if report is not None and i % report == 0:

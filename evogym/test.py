@@ -46,7 +46,8 @@ def generate_robot(g: Graph, structure):
     robot = np.zeros(structure)
     for i in range(structure[0]):
         for j in range(structure[1]):
-            input = (i, j)
+            input = (i - (structure[0] // 2),
+                     j - (structure[1] // 2))
             graph_out = g.operate(input)
             node = np.argmax(graph_out)
             robot[i][j] = node
@@ -139,7 +140,7 @@ def main():
     def ts_select(): return tournament_selection(
         population=structure_pop,
         generations=gens,
-        goal_fit=.1,
+        goal_fit=1000,
         fitness_func=s_fit_func,
         minimize_fitness=False,
         fit_share=args["fit_share"],
@@ -159,7 +160,7 @@ def main():
     def tc_select(): return tournament_selection(
         population=controller_pop,
         generations=gens,
-        goal_fit=.1,
+        goal_fit=1000,
         fitness_func=c_fit_func,
         minimize_fitness=False,
         fit_share=args["fit_share"],
