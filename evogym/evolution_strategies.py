@@ -1,3 +1,5 @@
+from evogym.envs import WalkingFlat
+from evogym import is_connected, has_actuator, get_full_connectivity, hashable
 import numpy as np
 from diversity_measures import fitness_diversity, structural_diversity
 from graph import Graph
@@ -15,7 +17,7 @@ b3 = .5
 alfa = 1
 beta = 1
 
-def explicit_fit_sharing(pop: Population, minimize_fitness: bool, species_threshold:float):
+def explicit_fit_sharing(pop: Population, minimize_fitness: bool, species_threshold: float):
     pop.separate_species(c1, c2, b1, b2, b3, species_threshold, 0)
     for _, sp in pop.species_dict.items():
         for indv in sp.members:
@@ -40,7 +42,7 @@ def update_pop_fitness_thread(indvs, fitness_func):
     return results_dict
 
 def parallel_update_pop_fitness(pop, fitness_func, fit_share, minimize_fitness, species_threshold, n_workers):
-    
+
     pool = ProcessPool(nodes=n_workers)
     results = pool.map(update_pop_fitness_thread, np.array_split(pop.indvs, n_workers), [fitness_func for _ in range(n_workers)])
     
@@ -59,7 +61,7 @@ def parallel_update_pop_fitness(pop, fitness_func, fit_share, minimize_fitness, 
 def print_report(gen, champion, pop, species_threshold):
     deltas = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
     print(f"best_in_gen: {gen};\t original_fit: {champion.original_fit:.2f};\t shared_fit: {champion.fitness:.2f};\t specie: {champion.species_id};")
-    
+
     fit_div = fitness_diversity(pop, 0.1)
     struc_div = structural_diversity(pop)
     species_div = len(pop.species_dict)
@@ -76,6 +78,9 @@ def print_report(gen, champion, pop, species_threshold):
     # print(f"Deltas ;\t min: {min(deltas)};\t max: {max(deltas)}\t avg: {np.average(deltas)} \n")
     # pp.update([[len(pop.species_dict)]])
     print()
+    if gen % 10 == 0:
+        controller_fitness_func(champion, 200)
+
 
 def run(
     pop: Population,
@@ -215,6 +220,7 @@ def one_plus_lambda_iteration(
 
     pop.indvs = new_population
 
+
 def one_plus_lambda(
     population: Population,
 
@@ -222,7 +228,7 @@ def one_plus_lambda(
     goal_fit: float,
     fitness_func: Callable[[Graph], float],
     minimize_fitness: bool = False,
-    fit_share = True,
+    fit_share=True,
     stagnation: int = 100,
     stag_preservation: int = 2,
     report=False,
@@ -231,18 +237,18 @@ def one_plus_lambda(
     mutate_active_only: bool = False,
     mutation_rate: float = .1,
 
-    species_threshold:float = .8,
+    species_threshold: float = .8,
 
     n_threads=1,
 ):
-    f = lambda pop : one_plus_lambda_iteration(
+    def f(pop): return one_plus_lambda_iteration(
         pop,
         minimize_fitness,
         n_champions,
         mutate_active_only,
         mutation_rate
     )
-        
+
     run(
         population,
         f,
@@ -255,7 +261,7 @@ def one_plus_lambda(
         stag_preservation,
         report,
         species_threshold,
-        n_threads,        
+        n_threads,
     )
 
 
@@ -266,7 +272,7 @@ def tournament_selection(
     goal_fit: float,
     fitness_func: Callable[[Graph], float],
     minimize_fitness: bool = False,
-    fit_share = True,
+    fit_share=True,
     stagnation: int = 100,
     stag_preservation: int = 2,
     report=None,
@@ -305,3 +311,53 @@ def tournament_selection(
         species_threshold,
         n_threads,
     )
+
+
+def generate_robot():
+    robot = np.array([[0, 0, 0, 0, 0],
+                      [0, 3, 3, 3, 0],
+                      [3, 3, 3, 3, 3],
+                      [3, 3, 3, 3, 3],
+                      [3, 3, 3, 3, 3]])
+
+    return robot, get_full_connectivity(robot)
+
+
+def get_observation(env):
+    a = env.get_vel_com_obs("robot")
+    b = env.get_pos_com_obs("robot")
+    return np.concatenate((a, b))
+
+
+def calculate_reward(env: WalkingFlat, controller: Graph, n_steps: int):
+    reward = 0
+
+    actuators = env.get_actuator_indices("robot")
+
+    for _ in range(n_steps):
+        obs = get_observation(env)
+
+        action_by_actuator = controller.operate(obs, reset_fit=False)
+        action = [action_by_actuator[i] for i in actuators]
+        # action = np.clip(action, .6, 1.6)
+        _, r, done, _ = env.step(np.array(action))
+        env.render('screen')
+        reward += r
+
+        if done:
+            break
+    return reward
+
+
+def controller_fitness_func(individual: Graph, n_steps: int):
+    robot, connections = generate_robot()
+
+    # connections = get_full_connectivity(robot)
+
+    env = WalkingFlat(body=robot, connections=connections)
+    env.reset()
+    env.render('screen')
+    reward = calculate_reward(env, individual, n_steps)
+    print(f'\ntotal reward: {round(reward, 5)}\n')
+    env.close()
+    return reward

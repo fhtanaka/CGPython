@@ -44,11 +44,11 @@ def eval_genome_constraint(robot, robot_dict):
 
 
 def generate_robot():
-    robot = np.array([[0, 3, 3, 3, 3],
-                      [0, 3, 3, 3, 3],
-                      [0, 3, 3, 3, 3],
-                      [0, 3, 3, 3, 3],
-                      [0, 0, 3, 3, 3]])
+    robot = np.array([[0, 0, 0, 0, 0],
+                      [0, 3, 3, 3, 0],
+                      [3, 3, 3, 3, 3],
+                      [3, 3, 3, 3, 3],
+                      [3, 3, 3, 3, 3]])
 
     return robot, get_full_connectivity(robot)
 
@@ -77,6 +77,7 @@ def calculate_reward(env: WalkingFlat, controller: Graph, n_steps: int):
             break
     return reward
 
+
 def controller_fitness_func(individual: Graph, structure: Tuple, n_steps: int, robot_dict):
     robot, connections = generate_robot()
 
@@ -92,7 +93,7 @@ def controller_fitness_func(individual: Graph, structure: Tuple, n_steps: int, r
 
 def main():
     strucure = (5, 5)
-    n_steps = 100
+    n_steps = 200
     robot_dict = {}
     args = parse_args()
 
@@ -102,6 +103,7 @@ def main():
         n_out=25,
         n_middle=args["n_middle_nodes"]
     )
+    dill.dump(controller_pop, open("results.pkl", mode='wb'))
 
     def c_fit_func(x): return controller_fitness_func(
         x, strucure, n_steps, robot_dict)
@@ -109,7 +111,7 @@ def main():
     tournament_selection(
         population=controller_pop,
         generations=args["max_gens"],
-        goal_fit=100,
+        goal_fit=3,
         fitness_func=c_fit_func,
         minimize_fitness=False,
         fit_share=args["fit_share"],
@@ -125,6 +127,7 @@ def main():
         n_threads=args["n_threads"],
     )
 
+    dill.dump(controller_pop, open("results.pkl", mode='wb'))
 
 
 if __name__ == "__main__":

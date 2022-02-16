@@ -7,7 +7,7 @@ def parse_args():
     # saving_to = "cache/tourney_cross_spec.pkl"
     report = 1
     pop_size = 100
-    n_middle_nodes = 100
+    n_middle_nodes = 40
     max_gens = 100
     fit_share = True
     stagnation = 50
@@ -19,7 +19,7 @@ def parse_args():
     selection_method = "tournament"
     n_tests = 100
     stag_preservation = 2
-    species_threshold = .85
+    species_threshold = .8
     cpus = 4
 
     parser = argparse.ArgumentParser()

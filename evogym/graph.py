@@ -58,19 +58,20 @@ class Graph:
         for i in range(self.n_in):
             self.nodes[i].value = input_values[i]
 
-    def reset_graph_value(self):
-        self.fitness = 0
-        self.original_fit = 0
+    def reset_graph_value(self, reset_fit=True):
+        if reset_fit:
+            self.fitness = 0
+            self.original_fit = 0
         for n_id in range(self.n_in, self.total_nodes): # reseting values for non-input nodes
             n = self.nodes[n_id]
             n.value = None
             n.active = False
         self.active_graph()
     
-    def operate(self, input_values):
+    def operate(self, input_values, reset_fit=True):
         self.set_inputs(input_values)
         results = [self.get_node_value(out) for out in range(self.n_in+self.n_middle, self.total_nodes)]
-        self.reset_graph_value()
+        self.reset_graph_value(reset_fit)
         return results
 
     def get_node_value(self, node_id):
