@@ -116,7 +116,7 @@ def controller_fitness_func(individual: Graph, structure: Tuple, n_steps: int, c
 
 def main():
     strucure = (5, 5)
-    n_steps = 100
+    n_steps = 200
     gens = 1
     robot_dict = {}
     args = parse_args()
@@ -177,15 +177,11 @@ def main():
     )
 
     for i in range(args["max_gens"]):
-        print(f"\nGen {i}:")
+        print(f"\n\nGen {i}:")
+        print(f"Structure:")
         ts_select()
-        structure_pop.indvs.sort(key=lambda x: (x.original_fit, x.id))
-        champion = structure_pop.indvs[-1]
-        print(f"Structure  fit({champion.id}): \t{champion.original_fit}")
+        print(f"Controller")
         tc_select()
-        controller_pop.indvs.sort(key=lambda x: (x.original_fit, x.id))
-        champion = controller_pop.indvs[-1]
-        print(f"Controller fit({champion.id}): \t{champion.original_fit}")
 
 
 if __name__ == "__main__":

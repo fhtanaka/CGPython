@@ -6,9 +6,9 @@ def parse_args():
     # Default Values
     # saving_to = "cache/tourney_cross_spec.pkl"
     report = 1
-    pop_size = 100
+    pop_size = 20
     n_middle_nodes = 40
-    max_gens = 100
+    max_gens = 1000
     fit_share = True
     stagnation = 50
     elitism = 4

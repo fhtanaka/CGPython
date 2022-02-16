@@ -60,7 +60,7 @@ def parallel_update_pop_fitness(pop, fitness_func, fit_share, minimize_fitness, 
 
 def print_report(gen, champion, pop, species_threshold):
     deltas = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
-    print(f"best_in_gen: {gen};\t original_fit: {champion.original_fit:.2f};\t shared_fit: {champion.fitness:.2f};\t specie: {champion.species_id};")
+    print(f"best_in_gen_{gen}: {champion.id};\t original_fit: {champion.original_fit:.2f};\t shared_fit: {champion.fitness:.2f};\t specie: {champion.species_id};")
 
     fit_div = fitness_diversity(pop, 0.1)
     struc_div = structural_diversity(pop)
@@ -78,8 +78,8 @@ def print_report(gen, champion, pop, species_threshold):
     # print(f"Deltas ;\t min: {min(deltas)};\t max: {max(deltas)}\t avg: {np.average(deltas)} \n")
     # pp.update([[len(pop.species_dict)]])
     print()
-    if gen % 10 == 0:
-        controller_fitness_func(champion, 200)
+    # if gen % 10 == 0:
+    #     controller_fitness_func(champion, 200)
 
 
 def run(
@@ -169,7 +169,7 @@ def tournament_selection_iteration(
     new_population: List[Graph] = []
     for c in champions:
         # I think this reset is unnecessary but it is here just to make sure
-        c.reset_graph_value()
+        c.reset_graph_value(reset_fit=False)
         new_population.append(c)
 
     for _ in range(pop.population_size - elitism):
