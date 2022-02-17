@@ -182,6 +182,8 @@ def main():
         ts_select()
         print(f"Controller")
         tc_select()
+        dill.dump(structure_pop, open(f"results/structure_{i}.pkl", mode='wb'))
+        dill.dump(controller_pop, open(f"results/controler_{i}.pkl", mode='wb'))
 
 
 if __name__ == "__main__":
