@@ -93,7 +93,7 @@ def controller_fitness_func(individual: Graph, structure: Tuple, n_steps: int, r
 
 def main():
     strucure = (5, 5)
-    n_steps = 200
+    n_steps = 400
     robot_dict = {}
     args = parse_args()
 
