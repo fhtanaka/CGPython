@@ -8,18 +8,18 @@ def parse_args():
     report = 1
     pop_size = 20
     n_middle_nodes = 40
-    max_gens = 1000
+    max_gens = 100
     fit_share = True
-    stagnation = 50
-    elitism = 4
+    stagnation = 20
+    elitism = 2
     mut_active_only = False
     mut_rate = .1
     crossover_rate = .9
-    tourney_size = 10
+    tourney_size = 4
     selection_method = "tournament"
     n_tests = 100
     stag_preservation = 2
-    species_threshold = .8
+    species_threshold = .75
     cpus = 4
 
     parser = argparse.ArgumentParser()

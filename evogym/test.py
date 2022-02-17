@@ -1,6 +1,6 @@
 from copyreg import constructor
 from evogym import is_connected, has_actuator, get_full_connectivity, hashable
-from evogym.envs import WalkingFlat
+from evogym.envs import WalkingFlat, StepsUp
 import struct
 from typing import List, Tuple
 import numpy as np
@@ -56,9 +56,10 @@ def generate_robot(g: Graph, structure):
 def get_observation(env):
     a = env.get_vel_com_obs("robot")
     b = env.get_pos_com_obs("robot")
-    return np.concatenate((a, b))
+    c = env.get_floor_obs("robot", ["ground"], 5)
+    return np.concatenate((a, b, c))
 
-def calculate_reward(env: WalkingFlat, controller: Graph, n_steps: int):
+def calculate_reward(env: StepsUp, controller: Graph, n_steps: int):
     reward = 0
     
     actuators = env.get_actuator_indices("robot")
@@ -69,7 +70,7 @@ def calculate_reward(env: WalkingFlat, controller: Graph, n_steps: int):
         action_by_actuator = controller.operate(obs)
         action = [action_by_actuator[i] for i in actuators]
         
-        _, r, done, _ = env.step(np.array(action))
+        obs, r, done, _ = env.step(np.array(action))
         reward += r
 
         if done:
@@ -84,7 +85,7 @@ def structure_fitness_func(individual: Graph, structure: Tuple, n_steps: int, co
         return -10000
 
     connections = get_full_connectivity(robot)
-    env = WalkingFlat(body=robot, connections=connections)
+    env = StepsUp(body=robot, connections=connections)
     env.reset()
 
     fitness = []
@@ -105,7 +106,7 @@ def controller_fitness_func(individual: Graph, structure: Tuple, n_steps: int, c
             continue
 
         connections = get_full_connectivity(robot)
-        env = WalkingFlat(body=robot, connections=connections)
+        env = StepsUp(body=robot, connections=connections)
         env.reset()
 
         reward = calculate_reward(env, individual, n_steps)
@@ -116,7 +117,7 @@ def controller_fitness_func(individual: Graph, structure: Tuple, n_steps: int, c
 
 def main():
     strucure = (5, 5)
-    n_steps = 200
+    n_steps = 300
     gens = 1
     robot_dict = {}
     args = parse_args()
@@ -131,7 +132,7 @@ def main():
 
     controller_pop = Population(
         population_size=args["pop_size"],
-        n_in=4,
+        n_in=15,
         n_out=25,
         n_middle=args["n_middle_nodes"]
     )
