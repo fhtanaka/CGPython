@@ -9,6 +9,7 @@ from graph import Graph
 from evolution_strategies import tournament_selection
 from population import Population
 from arg_parser import parse_args
+from pygifsicle import optimize
 
 
 def addition(x, y): return x+y
@@ -61,7 +62,7 @@ def get_observation(env):
 
 def calculate_reward(env: StepsUp, controller: Graph, n_steps: int):
     reward = 0
-    
+    env.reset()
     actuators = env.get_actuator_indices("robot")
 
     for _ in range(n_steps):
@@ -86,7 +87,6 @@ def structure_fitness_func(individual: Graph, structure: Tuple, n_steps: int, co
 
     connections = get_full_connectivity(robot)
     env = StepsUp(body=robot, connections=connections)
-    env.reset()
 
     fitness = []
     for controller in controllers.indvs:
@@ -107,7 +107,6 @@ def controller_fitness_func(individual: Graph, structure: Tuple, n_steps: int, c
 
         connections = get_full_connectivity(robot)
         env = StepsUp(body=robot, connections=connections)
-        env.reset()
 
         reward = calculate_reward(env, individual, n_steps)
         fitness.append(reward)

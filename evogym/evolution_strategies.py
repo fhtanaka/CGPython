@@ -26,25 +26,30 @@ def explicit_fit_sharing(pop: Population, minimize_fitness: bool, species_thresh
             else:
                 indv.fitness = (indv.fitness**alfa) / (len(sp.members)**beta)
 
-def update_pop_fitness(pop, fitness_func, fit_share, minimize_fitness, species_threshold):
+def update_pop_fitness(pop, gen, fitness_func, fit_share, minimize_fitness, species_threshold):
     for ind in pop.indvs:
-        ind.fitness = fitness_func(ind)
+        ind.fitness = fitness_func(ind, gen)
         ind.original_fit = ind.fitness
     if fit_share:
         explicit_fit_sharing(pop, minimize_fitness, species_threshold)
 
 
-def update_pop_fitness_thread(indvs, fitness_func):
+def update_pop_fitness_thread(indvs, gen, fitness_func):
     results_dict = {}
     for ind in indvs:
-        fit = fitness_func(ind)
+        fit = fitness_func(ind, gen)
         results_dict[ind.id] = fit
     return results_dict
 
-def parallel_update_pop_fitness(pop, fitness_func, fit_share, minimize_fitness, species_threshold, n_workers):
+def parallel_update_pop_fitness(pop, gen, fitness_func, fit_share, minimize_fitness, species_threshold, n_workers):
 
     pool = ProcessPool(nodes=n_workers)
-    results = pool.map(update_pop_fitness_thread, np.array_split(pop.indvs, n_workers), [fitness_func for _ in range(n_workers)])
+    results = pool.map(
+        update_pop_fitness_thread, 
+        np.array_split(pop.indvs, n_workers),
+        [gen for _ in range(n_workers)],
+        [fitness_func for _ in range(n_workers)]
+    )
     
     fitness_dict = {}
     for result_dict in results:
@@ -105,11 +110,11 @@ def run(
     stagnation_count = 0
     stag_preservation *= -1
 
-    for i in range(generations+1):
+    for gen in range(generations+1):
         if n_threads > 1:
-            parallel_update_pop_fitness(pop, fitness_func, fit_share, minimize_fitness, species_threshold, n_threads)
+            parallel_update_pop_fitness(pop, gen, fitness_func, fit_share, minimize_fitness, species_threshold, n_threads)
         else:
-            update_pop_fitness(pop, fitness_func, fit_share, minimize_fitness, species_threshold)
+            update_pop_fitness(pop, gen, fitness_func, fit_share, minimize_fitness, species_threshold)
 
         if minimize_fitness:
             champion = min(pop.indvs, key=attrgetter('original_fit'))
@@ -123,14 +128,14 @@ def run(
             stagnation_count += 1
         last_gen_fitness = gen_best_fitness
 
-        if fit_mod*gen_best_fitness >= fit_mod*goal_fit or i == generations:
+        if fit_mod*gen_best_fitness >= fit_mod*goal_fit or gen == generations:
             break
 
-        if report is not None and i % report == 0:
-            print_report(i, champion, pop, species_threshold)
+        if report is not None and gen % report == 0:
+            print_report(gen, champion, pop, species_threshold)
 
         if stagnation_count > stagnation:
-            print(f"Generation {i}: Fitness stagnated, reseting population")
+            print(f"Generation {gen}: Fitness stagnated, reseting population")
             stagnation_count = 0
             pop.indvs.sort(key=lambda x: (x.original_fit * fit_mod, x.id))
             pop.indvs[:stag_preservation] = pop.create_individuals()[:stag_preservation]

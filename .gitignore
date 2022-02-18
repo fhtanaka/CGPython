@@ -135,3 +135,6 @@ testing.ipynb
 
 *.pkl
 *.txt
+*.gif
+
+evogym/results_*/

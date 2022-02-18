@@ -6,7 +6,7 @@ def parse_args():
     # Default Values
     # saving_to = "cache/tourney_cross_spec.pkl"
     report = 1
-    pop_size = 32
+    pop_size = 10
     n_middle_nodes = 40
     max_gens = 500
     fit_share = True
@@ -21,6 +21,9 @@ def parse_args():
     stag_preservation = 2
     species_threshold = .7
     cpus = 4
+    n_steps = 300
+    env_name = "WalkingFlat"
+    goal_fit = 100
 
     parser = argparse.ArgumentParser()
 
@@ -35,9 +38,12 @@ def parse_args():
     parser.add_argument("-t", "--t_size", nargs="?", default=tourney_size, help="tourney_size", type=int) 
     parser.add_argument("-f", "--save_to", nargs="?", default=None, help="file to save the population")
 
+    parser.add_argument("--steps", nargs="?", default=n_steps, help="n_steps", type=int)
+    parser.add_argument("--env_name", nargs="?", default=env_name, help="env_name")
     parser.add_argument("--n_tests", nargs="?", default=n_tests, help="n_tests", type=int) 
     parser.add_argument("--cpu", nargs="?", default=cpus, help="selection_method", type=int)
     parser.add_argument("--stag_preservation", nargs="?", default=stag_preservation, help="stag_preservation", type=int) 
+    parser.add_argument("--goal_fit", nargs="?", default=goal_fit, help="goal_fit", type=int) 
     parser.add_argument("--species_threshold", nargs="?", default=species_threshold, help="species_threshold", type=float) 
     parser.add_argument("--selection_method", nargs="?", default=selection_method, help="selection_method")
     parser.add_argument("--mut_active", nargs="?", default=mut_active_only, help="mut_active_only") 
@@ -60,6 +66,9 @@ def parse_args():
     args_dict["save_to"] = command_line_args.save_to
     args_dict["species_threshold"] = command_line_args.species_threshold
     args_dict["n_threads"] = command_line_args.cpu
+    args_dict["n_steps"] = command_line_args.steps
+    args_dict["env_name"] = command_line_args.env_name
+    args_dict["goal_fit"] = command_line_args.goal_fit
  
     args_dict["fit_share"] = command_line_args.no_fit_share
     if args_dict["fit_share"] != True:
