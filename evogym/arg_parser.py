@@ -6,24 +6,24 @@ def parse_args():
     # Default Values
     # saving_to = "cache/tourney_cross_spec.pkl"
     report = 1
-    pop_size = 10
+    pop_size = 30
     n_middle_nodes = 40
-    max_gens = 500
+    max_gens = 100
     fit_share = True
     stagnation = 20
-    elitism = 4
+    elitism = 2
     mut_active_only = False
     mut_rate = .1
     crossover_rate = .9
-    tourney_size = 4
+    tourney_size = 3
     selection_method = "tournament"
     n_tests = 100
-    stag_preservation = 2
+    stag_preservation = 1
     species_threshold = .7
-    cpus = 4
-    n_steps = 300
-    env_name = "WalkingFlat"
-    goal_fit = 100
+    cpus = 8
+    n_steps = 600
+    env_name = "StepsUp"
+    goal_fit = 10
 
     parser = argparse.ArgumentParser()
 

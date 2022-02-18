@@ -160,9 +160,20 @@ def controller_fitness_func(individual: Graph, gen: int, robot: np.array, n_step
 
     return reward
 
+def get_top_robots(top, robot_dict):
+    ordered_robots = {k: v for k, v in sorted(robot_dict.items(), key=lambda item: -1*item[1].best_fit)}
+    best_robots = {}
+    cont = 0
+    for k, v in ordered_robots.items():
+        if cont >= top:
+            break
+        best_robots[k] = v
+        cont+=1
+    return best_robots
 
 def main():
     strucure = (5, 5)
+    save_top = 50
     robot_dict = {}
     args = parse_args()
 
@@ -196,7 +207,13 @@ def main():
     )
 
     if args["save_to"] is not None:
-        s = (structure_pop, robot_dict)
+        best_robots = get_top_robots(save_top, robot_dict)
+        for indv in structure_pop.indvs:
+            robot = generate_robot(indv, strucure)
+            h = hashable(robot) 
+            if h not in best_robots and h in robot_dict:
+                best_robots[h] = robot_dict[h]
+        s = (structure_pop, best_robots)
         dill.dump(s, open(args["save_to"], mode='wb'))
 
 if __name__ == "__main__":
