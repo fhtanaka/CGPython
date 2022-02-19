@@ -1,3 +1,4 @@
+import time
 from evogym.envs import WalkingFlat
 from evogym import is_connected, has_actuator, get_full_connectivity, hashable
 import numpy as np
@@ -107,10 +108,12 @@ def run(
         fit_mod = -1
         last_gen_fitness = float('inf')
 
+    break_by_stagnation = 0
     stagnation_count = 0
     stag_preservation *= -1
 
     for gen in range(generations+1):
+        s = time.time()
         if n_threads > 1:
             parallel_update_pop_fitness(pop, gen, fitness_func, fit_share, minimize_fitness, species_threshold, n_threads)
         else:
@@ -137,11 +140,17 @@ def run(
         if stagnation_count > stagnation:
             print(f"Generation {gen}: Fitness stagnated, reseting population")
             stagnation_count = 0
+            break_by_stagnation += 1
+            if break_by_stagnation > 5:
+                print("Exiting because stagnated too many times")
+                break
             pop.indvs.sort(key=lambda x: (x.original_fit * fit_mod, x.id))
             pop.indvs[:stag_preservation] = pop.create_individuals()[:stag_preservation]
-            update_pop_fitness(pop, fitness_func, False, minimize_fitness, species_threshold)
+            update_pop_fitness(pop, gen, fitness_func, False, minimize_fitness, species_threshold)
         
         selection_function(pop)
+        if report is not None and gen % report == 0:
+            print(f'Gen {gen} took {round(time.time()-s, 1)}s\n')
 
     # pop.indvs.sort(key=lambda x: (x.fitness * fit_mod, x.id))
     # print("\nFinished execution")

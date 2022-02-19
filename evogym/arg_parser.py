@@ -8,10 +8,10 @@ def parse_args():
     report = 1
     pop_size = 30
     n_middle_nodes = 40
-    max_gens = 100
+    max_gens = 500
     fit_share = True
-    stagnation = 20
-    elitism = 2
+    stagnation = 30
+    elitism = 3
     mut_active_only = False
     mut_rate = .1
     crossover_rate = .9
@@ -20,7 +20,7 @@ def parse_args():
     n_tests = 100
     stag_preservation = 1
     species_threshold = .7
-    cpus = 8
+    cpus = 10
     n_steps = 600
     env_name = "StepsUp"
     goal_fit = 10
