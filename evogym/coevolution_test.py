@@ -53,32 +53,12 @@ def generate_robot(g: Graph, structure):
             robot[i][j] = node
     return robot
 
-
-def get_observation_with_floor(env):
-    a = env.get_vel_com_obs("robot")
-    b = env.get_pos_com_obs("robot")
-    c = env.get_floor_obs("robot", ["ground"], 5)
-    return np.concatenate((a, b, c))
-
-
-def get_observation(env):
-    a = env.get_vel_com_obs("robot")
-    b = env.get_pos_com_obs("robot")
-    c = env.get_floor_obs("robot", ["ground"], 5)
-    return np.concatenate((a, b, c))
-
-
 def calculate_reward(env: StepsUp, controller: Graph, n_steps: int, env_name:str):
     reward = 0
-    env.reset()
+    obs = env.reset()
     actuators = env.get_actuator_indices("robot")
 
     for _ in range(n_steps):
-        if env_name == "StepsUp":
-            obs = get_observation_with_floor(env)
-        else:
-            obs = get_observation(env)
-
         action_by_actuator = controller.operate(obs)
         action = [action_by_actuator[i] for i in actuators]
 
@@ -90,13 +70,21 @@ def calculate_reward(env: StepsUp, controller: Graph, n_steps: int, env_name:str
 
     return reward, False
 
+def get_obs_size(robot, env_name):
+    if env_name == "StepsUp":
+        temp_env = StepsUp(body=robot)
+    else:
+        temp_env = WalkingFlat(body=robot)
+    obs = temp_env.reset()
+    temp_env.close()
+    return len(obs)
 
 def get_controller_population(robot: np.array, robot_dict: Dict[str, RobotController], args):
     robot_hash = hashable(robot)
     if robot_hash not in robot_dict:
         controller_pop = Population(
             population_size=args["pop_size"],
-            n_in=15,
+            n_in=get_obs_size(robot, args["env_name"]),
             n_out=25,
             n_middle=args["n_middle_nodes"]
         )
@@ -157,7 +145,7 @@ def controller_fitness_func(individual: Graph, gen: int, robot: np.array, n_step
         env = WalkingFlat(body=robot, connections=connections)
 
     reward, _ = calculate_reward(env, individual, n_steps, env_name)
-
+    env.close()
     return reward
 
 def get_top_robots(top, robot_dict):
