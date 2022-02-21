@@ -16,7 +16,7 @@ b2 = .75
 b3 = .5
 
 alfa = 1
-beta = 1
+beta = 1.5
 
 def explicit_fit_sharing(pop: Population, minimize_fitness: bool, species_threshold: float):
     pop.separate_species(c1, c2, b1, b2, b3, species_threshold, 0)

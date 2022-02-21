@@ -6,20 +6,20 @@ def parse_args():
     # Default Values
     # saving_to = "cache/tourney_cross_spec.pkl"
     report = 1
-    pop_size = 8
-    n_middle_nodes = 40
-    max_gens = 64
+    pop_size = 96
+    n_middle_nodes = 50
+    max_gens = 1000
     fit_share = True
     stagnation = 30
     elitism = 1
     mut_active_only = False
-    mut_rate = .15
+    mut_rate = .2
     crossover_rate = .9
     tourney_size = 2
     selection_method = "tournament"
     n_tests = 100
     stag_preservation = 1
-    species_threshold = .7
+    species_threshold = .8
     cpus = 8
     n_steps = 600
     env_name = "StepsUp"

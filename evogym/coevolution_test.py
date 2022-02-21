@@ -83,7 +83,7 @@ def get_controller_population(robot: np.array, robot_dict: Dict[str, RobotContro
     robot_hash = hashable(robot)
     if robot_hash not in robot_dict:
         controller_pop = Population(
-            population_size=args["pop_size"],
+            population_size=10,
             n_in=get_obs_size(robot, args["env_name"]),
             n_out=25,
             n_middle=args["n_middle_nodes"]
