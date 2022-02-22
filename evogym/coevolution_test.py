@@ -55,10 +55,10 @@ def generate_robot(g: Graph, structure):
 
 def calculate_reward(env: StepsUp, controller: Graph, n_steps: int, env_name:str):
     reward = 0
-    obs = env.reset()
+    env.reset()
     actuators = env.get_actuator_indices("robot")
-
     for _ in range(n_steps):
+        obs = get_observation_with_floor(env)
         action_by_actuator = controller.operate(obs)
         action = [action_by_actuator[i] for i in actuators]
 
@@ -79,12 +79,18 @@ def get_obs_size(robot, env_name):
     temp_env.close()
     return len(obs)
 
+def get_observation_with_floor(env):
+    a = env.get_vel_com_obs("robot")
+    b = env.get_pos_com_obs("robot")
+    c = env.get_floor_obs("robot", ["ground"], 5)
+    return np.concatenate((a, b, c))
+
 def get_controller_population(robot: np.array, robot_dict: Dict[str, RobotController], args):
     robot_hash = hashable(robot)
     if robot_hash not in robot_dict:
         controller_pop = Population(
-            population_size=10,
-            n_in=get_obs_size(robot, args["env_name"]),
+            population_size=20,
+            n_in=15,
             n_out=25,
             n_middle=args["n_middle_nodes"]
         )

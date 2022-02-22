@@ -7,23 +7,23 @@ def parse_args():
     # saving_to = "cache/tourney_cross_spec.pkl"
     report = 1
     pop_size = 96
-    n_middle_nodes = 50
-    max_gens = 1000
+    n_middle_nodes = 40
+    max_gens = 100
     fit_share = True
-    stagnation = 30
-    elitism = 1
+    stagnation = 20
+    elitism = 4
     mut_active_only = False
     mut_rate = .2
     crossover_rate = .9
-    tourney_size = 2
+    tourney_size = 10
     selection_method = "tournament"
     n_tests = 100
     stag_preservation = 1
     species_threshold = .8
-    cpus = 8
-    n_steps = 600
+    cpus = 10
+    n_steps = 400
     env_name = "StepsUp"
-    goal_fit = 10
+    goal_fit = 4
 
     parser = argparse.ArgumentParser()
 
