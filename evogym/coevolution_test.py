@@ -197,17 +197,18 @@ def main():
         crossover_rate=args["crossover_rate"],
         tournament_size=args["tourney_size"],
         species_threshold=args["species_threshold"],
+        save_pop=args["save_to"],
         n_threads=1,
     )
 
     if args["save_to"] is not None:
-        best_robots = get_top_robots(save_top, robot_dict)
-        for indv in structure_pop.indvs:
-            robot = generate_robot(indv, strucure)
-            h = hashable(robot) 
-            if h not in best_robots and h in robot_dict:
-                best_robots[h] = robot_dict[h]
-        s = (structure_pop, best_robots)
+        # best_robots = get_top_robots(save_top, robot_dict)
+        # for indv in structure_pop.indvs:
+        #     robot = generate_robot(indv, strucure)
+        #     h = hashable(robot) 
+        #     if h not in best_robots and h in robot_dict:
+        #         best_robots[h] = robot_dict[h]
+        s = (structure_pop, robot_dict)
         dill.dump(s, open(args["save_to"], mode='wb'))
 
 if __name__ == "__main__":

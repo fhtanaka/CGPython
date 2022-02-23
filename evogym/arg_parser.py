@@ -11,7 +11,7 @@ def parse_args():
     max_gens = 100
     fit_share = True
     stagnation = 20
-    elitism = 4
+    elitism = 2
     mut_active_only = False
     mut_rate = .2
     crossover_rate = .9
@@ -19,7 +19,7 @@ def parse_args():
     selection_method = "tournament"
     n_tests = 100
     stag_preservation = 1
-    species_threshold = .8
+    species_threshold = .85
     cpus = 10
     n_steps = 400
     env_name = "StepsUp"

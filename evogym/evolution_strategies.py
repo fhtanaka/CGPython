@@ -8,15 +8,17 @@ from population import Population
 from typing import Callable, List
 from operator import attrgetter
 from pathos.multiprocessing import ProcessPool
+import sys, errno
+import dill
 
 c1 = 1
 c2 = 1
 b1 = 1
-b2 = .75
-b3 = .5
+b2 = .5
+b3 = .25
 
 alfa = 1
-beta = 1.5
+beta = 2
 
 def explicit_fit_sharing(pop: Population, minimize_fitness: bool, species_threshold: float):
     pop.separate_species(c1, c2, b1, b2, b3, species_threshold, 0)
@@ -43,27 +45,32 @@ def update_pop_fitness_thread(indvs, gen, fitness_func):
     return results_dict
 
 def parallel_update_pop_fitness(pop, gen, fitness_func, fit_share, minimize_fitness, species_threshold, n_workers):
+    try:
+        pool = ProcessPool(nodes=n_workers)
+        results = pool.map(
+            update_pop_fitness_thread, 
+            np.array_split(pop.indvs, n_workers),
+            [gen for _ in range(n_workers)],
+            [fitness_func for _ in range(n_workers)]
+        )
+        
+        fitness_dict = {}
+        for result_dict in results:
+            for k, v in result_dict.items():
+                fitness_dict[k] = v
 
-    pool = ProcessPool(nodes=n_workers)
-    results = pool.map(
-        update_pop_fitness_thread, 
-        np.array_split(pop.indvs, n_workers),
-        [gen for _ in range(n_workers)],
-        [fitness_func for _ in range(n_workers)]
-    )
-    
-    fitness_dict = {}
-    for result_dict in results:
-        for k, v in result_dict.items():
-            fitness_dict[k] = v
+        for ind in pop.indvs:
+            ind.fitness = fitness_dict[ind.id]
+            ind.original_fit = ind.fitness
 
-    for ind in pop.indvs:
-        ind.fitness = fitness_dict[ind.id]
-        ind.original_fit = ind.fitness
-
-    if fit_share:
-        explicit_fit_sharing(pop, minimize_fitness, species_threshold)
-
+        if fit_share:
+            explicit_fit_sharing(pop, minimize_fitness, species_threshold)
+            
+    except IOError as e:
+        if e.errno == errno.EPIPE:
+            print("Problem with broken pipe")
+        else:
+            raise(IOError)
 def print_report(gen, champion, pop, species_threshold):
     deltas = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
     print(f"best_in_gen_{gen}: {champion.id};\t original_fit: {champion.original_fit:.2f};\t shared_fit: {champion.fitness:.2f};\t specie: {champion.species_id};")
@@ -100,6 +107,7 @@ def run(
     stag_preservation,
     report,
     species_threshold,
+    save_pop = None,
     n_threads = 1,
 ):
     fit_mod = 1
@@ -136,6 +144,11 @@ def run(
 
         if report is not None and gen % report == 0:
             print_report(gen, champion, pop, species_threshold)
+            if save_pop != None:
+                if ".pkl" in save_pop:
+                    save_pop = save_pop.split(".pkl")[0]
+                f = f"{save_pop}_g_{gen}.pkl"
+                dill.dump(s, open(f, mode='wb'))
 
         if stagnation_count > stagnation:
             print(f"Generation {gen}: Fitness stagnated, reseting population")
@@ -253,6 +266,7 @@ def one_plus_lambda(
 
     species_threshold: float = .8,
 
+    save_pop:str = None,
     n_threads=1,
 ):
     def f(pop): return one_plus_lambda_iteration(
@@ -275,6 +289,7 @@ def one_plus_lambda(
         stag_preservation,
         report,
         species_threshold,
+        save_pop,
         n_threads,
     )
 
@@ -299,6 +314,7 @@ def tournament_selection(
 
     species_threshold: float = .8,
 
+    save_pop:str = None,
     n_threads = 1,
 ):
     f = lambda pop: tournament_selection_iteration(
@@ -323,6 +339,7 @@ def tournament_selection(
         stag_preservation,
         report,
         species_threshold,
+        save_pop,
         n_threads,
     )
 
