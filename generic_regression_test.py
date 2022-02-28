@@ -1,9 +1,9 @@
 import numpy as np
 import dill
-from graph import Graph
-from evolution_strategies import one_plus_lambda, tournament_selection
-from population import Population
-from arg_parser import parse_args
+from src.graph import Graph
+from src.evolution_strategies import one_plus_lambda, tournament_selection
+from src.population import Population
+from src.arg_parser import parse_args
 import cProfile
 import pstats
 
@@ -49,7 +49,7 @@ def create_tests(n_tests, n_inputs, funcs):
     return tests
 
 
-def fitness_func(individual: Graph, tests):
+def fitness_func(individual: Graph, gen: int, tests):
     fitness = 0
     for t in tests:
         inputs = t[0]
@@ -67,7 +67,7 @@ def main():
     args = parse_args()
 
     inputs, funcs, tests = generate_functions(args["n_tests"])
-    fit_func = lambda x: fitness_func(x, tests)
+    fit_func = lambda indv, gen: fitness_func(indv, gen, tests)
     
     population = Population(
         population_size = args["pop_size"],

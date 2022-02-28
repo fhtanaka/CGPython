@@ -1,14 +1,12 @@
-from copyreg import constructor
 from evogym import is_connected, has_actuator, get_full_connectivity, hashable
 from evogym.envs import WalkingFlat
-import struct
-from typing import List, Tuple
+from typing import Tuple
 import numpy as np
 import dill
-from graph import Graph
-from evolution_strategies import tournament_selection
-from population import Population
-from arg_parser import parse_args
+from src.graph import Graph
+from src.evolution_strategies import tournament_selection
+from src.population import Population
+from src.arg_parser import parse_args
 
 
 def addition(x, y): return x+y
@@ -78,7 +76,7 @@ def calculate_reward(env: WalkingFlat, controller: Graph, n_steps: int):
     return reward
 
 
-def controller_fitness_func(individual: Graph, structure: Tuple, n_steps: int, robot_dict):
+def controller_fitness_func(individual: Graph, gen: int, structure: Tuple, n_steps: int, robot_dict):
     robot, connections = generate_robot()
 
     # connections = get_full_connectivity(robot)
@@ -105,8 +103,8 @@ def main():
     )
     dill.dump(controller_pop, open("results.pkl", mode='wb'))
 
-    def c_fit_func(x): return controller_fitness_func(
-        x, strucure, n_steps, robot_dict)
+    def c_fit_func(indv, gen): return controller_fitness_func(
+        indv, gen, strucure, n_steps, robot_dict)
 
     tournament_selection(
         population=controller_pop,

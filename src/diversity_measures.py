@@ -1,5 +1,4 @@
-from population import Population
-from operator import attrgetter
+from .population import Population
 
 def fitness_diversity(pop: Population, interval_size: float):
     diversity_dict = {}

@@ -1,14 +1,12 @@
 import time
-from evogym.envs import WalkingFlat
-from evogym import is_connected, has_actuator, get_full_connectivity, hashable
 import numpy as np
-from diversity_measures import fitness_diversity, structural_diversity
-from graph import Graph
-from population import Population
+from .diversity_measures import fitness_diversity, structural_diversity
+from .graph import Graph
+from .population import Population
 from typing import Callable, List
 from operator import attrgetter
 from pathos.multiprocessing import ProcessPool
-import sys, errno
+import errno
 import dill
 
 c1 = 1
@@ -342,53 +340,3 @@ def tournament_selection(
         save_pop,
         n_threads,
     )
-
-
-def generate_robot():
-    robot = np.array([[0, 0, 0, 0, 0],
-                      [0, 3, 3, 3, 0],
-                      [3, 3, 3, 3, 3],
-                      [3, 3, 3, 3, 3],
-                      [3, 3, 3, 3, 3]])
-
-    return robot, get_full_connectivity(robot)
-
-
-def get_observation(env):
-    a = env.get_vel_com_obs("robot")
-    b = env.get_pos_com_obs("robot")
-    return np.concatenate((a, b))
-
-
-def calculate_reward(env: WalkingFlat, controller: Graph, n_steps: int):
-    reward = 0
-
-    actuators = env.get_actuator_indices("robot")
-
-    for _ in range(n_steps):
-        obs = get_observation(env)
-
-        action_by_actuator = controller.operate(obs, reset_fit=False)
-        action = [action_by_actuator[i] for i in actuators]
-        # action = np.clip(action, .6, 1.6)
-        _, r, done, _ = env.step(np.array(action))
-        env.render('screen')
-        reward += r
-
-        if done:
-            break
-    return reward
-
-
-def controller_fitness_func(individual: Graph, n_steps: int):
-    robot, connections = generate_robot()
-
-    # connections = get_full_connectivity(robot)
-
-    env = WalkingFlat(body=robot, connections=connections)
-    env.reset()
-    env.render('screen')
-    reward = calculate_reward(env, individual, n_steps)
-    print(f'\ntotal reward: {round(reward, 5)}\n')
-    env.close()
-    return reward

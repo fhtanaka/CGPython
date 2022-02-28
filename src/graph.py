@@ -1,6 +1,6 @@
 from typing import Dict, List
-from node import Node
-from operation import Operation
+from .node import Node
+from .operation import Operation
 import numpy as np
 import itertools
 

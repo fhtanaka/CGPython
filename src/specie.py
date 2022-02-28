@@ -1,6 +1,6 @@
 from operator import attrgetter
 from typing import List
-from graphviz import Graph
+from .graph import Graph
 import itertools
 
 

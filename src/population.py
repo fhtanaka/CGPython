@@ -1,12 +1,12 @@
 from collections import namedtuple
 import itertools
 import numpy as np
-from graph import Graph
-from node import Node
-from operation import Operation 
-from typing import Callable, Dict, List
+from .graph import Graph
+from .node import Node
+from .operation import Operation 
+from typing import Dict, List
 from sklearn.utils import shuffle
-from specie import Specie
+from .specie import Specie
 
 def order_by_fitness(fitness_modifier):
     def func(x: Graph):

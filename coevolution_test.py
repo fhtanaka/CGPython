@@ -3,10 +3,10 @@ from evogym.envs import WalkingFlat, StepsUp
 from typing import Dict, List, Tuple
 import numpy as np
 import dill
-from graph import Graph
-from evolution_strategies import tournament_selection
-from population import Population
-from arg_parser import parse_args
+from src.graph import Graph
+from src.evolution_strategies import tournament_selection
+from src.population import Population
+from src.arg_parser import parse_args
 from operator import attrgetter
 
 def addition(x, y): return x+y
