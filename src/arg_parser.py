@@ -8,10 +8,10 @@ def parse_args():
     report = None
     csv_file = None
     pop_size = 96
-    n_middle_nodes = 40
+    n_middle_nodes = 32
     max_gens = 100
     fit_share = True
-    stagnation = 20
+    stagnation = 100
     elitism = 2
     mut_active_only = False
     mut_rate = .2
@@ -21,7 +21,7 @@ def parse_args():
     n_tests = 100
     stag_preservation = 1
     species_threshold = .85
-    cpus = 10
+    cpus = 4
     n_steps = 400
     env_name = "StepsUp"
     goal_fit = 4
@@ -51,7 +51,7 @@ def parse_args():
     parser.add_argument("--selection_method", nargs="?", default=selection_method, help="selection_method")
     parser.add_argument("--mut_active", nargs="?", default=mut_active_only, help="mut_active_only") 
     parser.add_argument("--no_fit_share", nargs="?", default=fit_share, help="fit_share")
-    parser.add_argument("--csv", nargs="?", default=fit_share, help="fit_share")
+    parser.add_argument("--csv", nargs="?", default=csv_file, help="fit_share")
 
     command_line_args = parser.parse_args()
 

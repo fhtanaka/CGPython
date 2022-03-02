@@ -29,7 +29,7 @@ def explicit_fit_sharing(pop: Population, minimize_fitness: bool, species_thresh
 
 def update_pop_fitness(pop, gen, fitness_func, fit_share, minimize_fitness, species_threshold):
     for ind in pop.indvs:
-        ind.fitness = fitness_func(ind, gen)
+        ind.fitness = np.clip(fitness_func(ind, gen), -1*(10**10), 10**10)
         ind.original_fit = ind.fitness
     if fit_share:
         explicit_fit_sharing(pop, minimize_fitness, species_threshold)
@@ -38,7 +38,7 @@ def update_pop_fitness(pop, gen, fitness_func, fit_share, minimize_fitness, spec
 def update_pop_fitness_thread(indvs, gen, fitness_func):
     results_dict = {}
     for ind in indvs:
-        fit = fitness_func(ind, gen)
+        fit = np.clip(fitness_func(ind, gen), -1*(10**10), 10**10)
         results_dict[ind.id] = fit
     return results_dict
 
@@ -92,18 +92,18 @@ def print_report(gen, champion, pop, species_threshold, fit_partition_size):
     deltas = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
     print(f"best_in_gen_{gen}: {champion.id};\t original_fit: {champion.original_fit:.2f};\t shared_fit: {champion.fitness:.2f};\t specie: {champion.species_id};")
 
-    fit_div, entropy = fitness_diversity(pop, fit_partition_size)
+    fit_div, entropy = pop_entropy_and_fitness_diversity(pop, fit_partition_size)
     struc_div = structural_diversity(pop)
     species_div = len(pop.species_dict)
     print(f"n_species: {species_div};\t structure_diversity: {struc_div};\t fit_diversity: {fit_div};\t entroypy: {entropy}")
 
-    if species_div < 20:
-        print(f"Species: [", end="")
-        for _, sp in sorted(pop.species_dict.items()):
-            print(f"{sp.representant.species_id} ({sp.age}): {len(sp.members)}", end=", ")
-        print("]")
-    else:
-        print(f"Species: [...]")
+    # if species_div < 20:
+    #     print(f"Species: [", end="")
+    #     for _, sp in sorted(pop.species_dict.items()):
+    #         print(f"{sp.representant.species_id} ({sp.age}): {len(sp.members)}", end=", ")
+    #     print("]")
+    # else:
+    #     print(f"Species: [...]")
 
     # print(f"Deltas ;\t min: {min(deltas)};\t max: {max(deltas)}\t avg: {np.average(deltas)} \n")
     # pp.update([[len(pop.species_dict)]])
