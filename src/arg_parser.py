@@ -5,7 +5,8 @@ def parse_args():
 
     # Default Values
     # saving_to = "cache/tourney_cross_spec.pkl"
-    report = 1
+    report = None
+    csv_file = None
     pop_size = 96
     n_middle_nodes = 40
     max_gens = 100
@@ -24,6 +25,7 @@ def parse_args():
     n_steps = 400
     env_name = "StepsUp"
     goal_fit = 4
+    fit_partition = 1
 
     parser = argparse.ArgumentParser()
 
@@ -45,9 +47,11 @@ def parse_args():
     parser.add_argument("--stag_preservation", nargs="?", default=stag_preservation, help="stag_preservation", type=int) 
     parser.add_argument("--goal_fit", nargs="?", default=goal_fit, help="goal_fit", type=int) 
     parser.add_argument("--species_threshold", nargs="?", default=species_threshold, help="species_threshold", type=float) 
+    parser.add_argument("--fit_partition", nargs="?", default=fit_partition, help="fit_partition", type=float) 
     parser.add_argument("--selection_method", nargs="?", default=selection_method, help="selection_method")
     parser.add_argument("--mut_active", nargs="?", default=mut_active_only, help="mut_active_only") 
     parser.add_argument("--no_fit_share", nargs="?", default=fit_share, help="fit_share")
+    parser.add_argument("--csv", nargs="?", default=fit_share, help="fit_share")
 
     command_line_args = parser.parse_args()
 
@@ -69,7 +73,9 @@ def parse_args():
     args_dict["n_steps"] = command_line_args.steps
     args_dict["env_name"] = command_line_args.env_name
     args_dict["goal_fit"] = command_line_args.goal_fit
- 
+    args_dict["csv"] = command_line_args.csv
+    args_dict["fit_partition"] = command_line_args.fit_partition
+
     args_dict["fit_share"] = command_line_args.no_fit_share
     if args_dict["fit_share"] != True:
         args_dict["fit_share"] = False
@@ -78,9 +84,10 @@ def parse_args():
     if args_dict["mut_active_only"] != False:
         args_dict["mut_active_only"] = True
 
-    for k, v in args_dict.items():
-        print(f"{k}: {v}")
-    print()
+    if report is not None:
+        for k, v in args_dict.items():
+            print(f"{k}: {v}")
+        print()
 
     return args_dict
 

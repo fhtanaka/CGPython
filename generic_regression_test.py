@@ -93,6 +93,8 @@ def main():
         tournament_size=args["tourney_size"],
         species_threshold=args["species_threshold"],
         n_threads=args["n_threads"],
+        csv_file=args["csv"],
+        fit_partition_size=args["fit_partition"]
     )
 
     def p_lambda(): return one_plus_lambda(
@@ -110,6 +112,8 @@ def main():
         mutation_rate=args["mut_rate"],
         species_threshold=args["species_threshold"],
         n_threads=args["n_threads"],
+        csv_file=args["csv"],
+        fit_partition_size=args["fit_partition"]
     )
 
     exec_func = t_select

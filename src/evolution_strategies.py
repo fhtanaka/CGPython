@@ -1,6 +1,6 @@
 import time
 import numpy as np
-from .diversity_measures import fitness_diversity, structural_diversity
+from .diversity_measures import *
 from .graph import Graph
 from .population import Population
 from typing import Callable, List
@@ -69,14 +69,33 @@ def parallel_update_pop_fitness(pop, gen, fitness_func, fit_share, minimize_fitn
             print("Problem with broken pipe")
         else:
             raise(IOError)
-def print_report(gen, champion, pop, species_threshold):
+
+def print_csv(gen, champion, pop, species_threshold, fit_partition_size, csv_file):
+    deltas = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
+    fit_div, entropy = pop_entropy_and_fitness_diversity(pop, fit_partition_size)
+    struc_div = structural_diversity(pop)
+    species_div = len(pop.species_dict)
+    _, global_gen_markers = population_genetic_marks(pop)
+
+    active_cont = 0
+    inactive_cont = 0
+    for qtd in global_gen_markers.values():
+        if qtd[0] > 0:
+            active_cont += 1
+        if qtd[1] > 0:
+            inactive_cont += 1
+
+    csv_file.write(f"{gen};{champion.original_fit};{species_div};{struc_div};{fit_div};{entropy};{len(global_gen_markers)};{active_cont};{inactive_cont};{np.average(deltas)};{np.std(deltas)}\n")
+
+
+def print_report(gen, champion, pop, species_threshold, fit_partition_size):
     deltas = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
     print(f"best_in_gen_{gen}: {champion.id};\t original_fit: {champion.original_fit:.2f};\t shared_fit: {champion.fitness:.2f};\t specie: {champion.species_id};")
 
-    fit_div = fitness_diversity(pop, 0.1)
+    fit_div, entropy = fitness_diversity(pop, fit_partition_size)
     struc_div = structural_diversity(pop)
     species_div = len(pop.species_dict)
-    print(f"n_species: {species_div};\t structure_diversity: {struc_div};\t fit_diversity: {fit_div}")
+    print(f"n_species: {species_div};\t structure_diversity: {struc_div};\t fit_diversity: {fit_div};\t entroypy: {entropy}")
 
     if species_div < 20:
         print(f"Species: [", end="")
@@ -105,6 +124,8 @@ def run(
     stag_preservation,
     report,
     species_threshold,
+    csv_file,
+    fit_partition_size,
     save_pop = None,
     n_threads = 1,
 ):
@@ -117,6 +138,13 @@ def run(
     break_by_stagnation = 0
     stagnation_count = 0
     stag_preservation *= -1
+
+    file = None
+    if csv_file is not None:
+        file = open(csv_file, 'w')
+        header = "gen;fitness;n_species;p_isomorphisms;unique_fitness;entropy;total_gen_markers;active_gen_markers;inactive_gen_markers;avg_delta;std_delta\n"
+        file.write(header)
+
 
     for gen in range(generations+1):
         s = time.time()
@@ -140,8 +168,11 @@ def run(
         if fit_mod*gen_best_fitness >= fit_mod*goal_fit or gen == generations:
             break
 
+        if csv_file is not None:
+            print_csv(gen, champion, pop, species_threshold, fit_partition_size, file)
+
         if report is not None and gen % report == 0:
-            print_report(gen, champion, pop, species_threshold)
+            print_report(gen, champion, pop, species_threshold, fit_partition_size)
             if save_pop != None:
                 if ".pkl" in save_pop:
                     save_pop = save_pop.split(".pkl")[0]
@@ -149,11 +180,13 @@ def run(
                 dill.dump(s, open(f, mode='wb'))
 
         if stagnation_count > stagnation:
-            print(f"Generation {gen}: Fitness stagnated, reseting population")
+            if report is not None:
+                print(f"Generation {gen}: Fitness stagnated, reseting population")
             stagnation_count = 0
             break_by_stagnation += 1
             if break_by_stagnation > 5:
-                print("Exiting because stagnated too many times")
+                if report is not None:
+                    print("Exiting because stagnated too many times")
                 break
             pop.indvs.sort(key=lambda x: (x.original_fit * fit_mod, x.id))
             pop.indvs[:stag_preservation] = pop.create_individuals()[:stag_preservation]
@@ -163,6 +196,8 @@ def run(
         if report is not None and gen % report == 0:
             print(f'Gen {gen} took {round(time.time()-s, 1)}s\n')
 
+    if csv_file is not None:
+        file.close()
     # pop.indvs.sort(key=lambda x: (x.fitness * fit_mod, x.id))
     # print("\nFinished execution")
     # print("Total generations: {}".format(i))
@@ -266,6 +301,9 @@ def one_plus_lambda(
 
     save_pop:str = None,
     n_threads=1,
+
+    csv_file = None,
+    fit_partition_size = 1,
 ):
     def f(pop): return one_plus_lambda_iteration(
         pop,
@@ -287,6 +325,8 @@ def one_plus_lambda(
         stag_preservation,
         report,
         species_threshold,
+        csv_file,
+        fit_partition_size,
         save_pop,
         n_threads,
     )
@@ -314,6 +354,9 @@ def tournament_selection(
 
     save_pop:str = None,
     n_threads = 1,
+
+    csv_file = None,
+    fit_partition_size = 1,
 ):
     f = lambda pop: tournament_selection_iteration(
         pop,
@@ -337,6 +380,8 @@ def tournament_selection(
         stag_preservation,
         report,
         species_threshold,
+        csv_file,
+        fit_partition_size,
         save_pop,
         n_threads,
     )

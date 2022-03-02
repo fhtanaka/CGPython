@@ -155,6 +155,7 @@ class Population:
             if indv.species_id in self.species_dict:
                 sp = self.species_dict[indv.species_id]
                 delta = self.graph_species_delta(indv,  sp.representant, c1, c2, b1, b2, b3)
+                deltas.append(delta)
                 if delta <= sp_threshold:
                     has_species = True
                     indv.species_id = sp.id
@@ -183,5 +184,4 @@ class Population:
                 new_species_dict[sp.id] = sp
 
         self.species_dict = new_species_dict
-
         return deltas
