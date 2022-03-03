@@ -14,13 +14,13 @@ def parse_args():
     stagnation = 100
     elitism = 2
     mut_active_only = False
-    mut_rate = .2
+    mut_rate = .1
     crossover_rate = .9
     tourney_size = 10
     selection_method = "tournament"
     n_tests = 100
     stag_preservation = 1
-    species_threshold = .85
+    species_threshold = .7
     cpus = 4
     n_steps = 400
     env_name = "StepsUp"
@@ -84,10 +84,10 @@ def parse_args():
     if args_dict["mut_active_only"] != False:
         args_dict["mut_active_only"] = True
 
-    if report is not None:
-        for k, v in args_dict.items():
-            print(f"{k}: {v}")
-        print()
+    # if report is not None:
+    for k, v in args_dict.items():
+        print(f"{k}: {v}")
+    print()
 
     return args_dict
 

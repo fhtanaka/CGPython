@@ -124,11 +124,12 @@ def main():
     if args["selection_method"] == "lambda":
         exec_func = p_lambda
 
-    profile = cProfile.Profile()
-    profile.runcall(exec_func)
-    ps = pstats.Stats(profile)
-    ps.print_stats()
-    print()
+    # profile = cProfile.Profile()
+    # profile.runcall(exec_func)
+    # ps = pstats.Stats(profile)
+    # ps.print_stats()
+    # print()
+    exec_func()
 
     if args["save_to"] is not None:
         dill.dump(population, open(args["save_to"], mode='wb'))

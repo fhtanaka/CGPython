@@ -75,7 +75,7 @@ def print_csv(gen, champion, pop, species_threshold, fit_partition_size, csv_fil
     fit_div, entropy = pop_entropy_and_fitness_diversity(pop, fit_partition_size)
     struc_div = structural_diversity(pop)
     species_div = len(pop.species_dict)
-    _, global_gen_markers = population_genetic_marks(pop)
+    _, global_gen_markers = population_genetic_marks(pop, 2)
 
     active_cont = 0
     inactive_cont = 0
@@ -165,8 +165,6 @@ def run(
             stagnation_count += 1
         last_gen_fitness = gen_best_fitness
 
-        if fit_mod*gen_best_fitness >= fit_mod*goal_fit or gen == generations:
-            break
 
         if csv_file is not None:
             print_csv(gen, champion, pop, species_threshold, fit_partition_size, file)
@@ -178,6 +176,9 @@ def run(
                     save_pop = save_pop.split(".pkl")[0]
                 f = f"{save_pop}_g_{gen}.pkl"
                 dill.dump(s, open(f, mode='wb'))
+
+        if fit_mod*gen_best_fitness >= fit_mod*goal_fit or gen == generations:
+            break
 
         if stagnation_count > stagnation:
             if report is not None:

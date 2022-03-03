@@ -60,26 +60,33 @@ def structural_diversity(pop: Population):
 
     return len(diversity_dict)
 
-def graph_genetic_marks(g: Graph):
-    nodes_str = []
+def node_g_mark(g: Graph, n_index:int, depth: int, op_arr):
+    if depth == 0:
+        return op_arr[n_index]
+
+    node = g.nodes[n_index]
+    mark = ""
+    for input in node.decode_inputs():
+        mark += node_g_mark(g, input, depth-1, op_arr) + ", "
+    mark = f"{op_arr[n_index]} ({mark[:-2]})"
+    
+    return mark
+
+def graph_genetic_marks(g: Graph, depth = 1):
+    op_arr = []
     for node in g.nodes:
         if node.operation == None:
-            nodes_str.append(f"n_{node.id}")
+            op_arr.append(f"n_{node.id}")
         else:
-            nodes_str.append(g.decode_operation(node.operation).string)
+            op_arr.append(g.decode_operation(node.operation).string)
 
 
     markers: Dict[str, int] = {}
-    for node in g.nodes:
+    for n_index, node in enumerate(g.nodes):
         if len(node.inputs) == 0 or node.operation == None:
             continue
 
-        mark = ""
-        for input in node.decode_inputs():
-            mark += nodes_str[input] + ", "
-        op = g.decode_operation(node.operation).string
-        mark = f"{op} ({mark[:-2]})"
-
+        mark = node_g_mark(g, n_index, depth, op_arr)
         if mark not in markers:
             markers[mark] = [0, 0]
 
@@ -89,11 +96,11 @@ def graph_genetic_marks(g: Graph):
             markers[mark][1] += 1
     return markers
 
-def population_genetic_marks(pop: Population):
+def population_genetic_marks(pop: Population, depth = 1):
     markers_by_indv = {}
     global_gen_markers = {}
     for indv in pop.indvs:
-        g_mark = graph_genetic_marks(indv)
+        g_mark = graph_genetic_marks(indv, depth)
         markers_by_indv[indv.id] = g_mark
         for mark, qtd in g_mark.items():
             if mark not in global_gen_markers:

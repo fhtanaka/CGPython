@@ -14,7 +14,7 @@ def multiplication(x, y): return x*y
 def subtraction(x, y): return x-y
 def constant(x): return x
 def protected_div(x, y): return 1 if y == 0 else x/y
-def protected_log(x): return 0 if x <= 0 else math.log(x)
+def protected_log(x): return 0 if x <= 0.01 else math.log(x)
 def increment(x): return x+1
 def invert(x): return -x
 def protected_exp(x): return 10**10 if x > 24 else math.exp(x)
@@ -26,7 +26,7 @@ Population.add_operation(arity=2, func=subtraction, string="-")
 Population.add_operation(arity=2, func=protected_div, string="/")
 Population.add_operation(arity=1, func=math.sin, string="SIN")
 Population.add_operation(arity=1, func=math.cos, string="COS")
-Population.add_operation(arity=1, func=protected_exp, string="EXP")
+# Population.add_operation(arity=1, func=protected_exp, string="EXP")
 Population.add_operation(arity=1, func=protected_log, string="RLOG")
 Population.rng = np.random.RandomState(10)
 
@@ -123,11 +123,12 @@ def main():
     if args["selection_method"] == "lambda":
         exec_func = p_lambda
 
-    profile = cProfile.Profile()
-    profile.runcall(exec_func)
-    ps = pstats.Stats(profile)
-    ps.print_stats()
-    print()
+    # profile = cProfile.Profile()
+    # profile.runcall(exec_func)
+    # ps = pstats.Stats(profile)
+    # ps.print_stats()
+    # print()
+    exec_func()
 
     if args["save_to"] is not None:
         dill.dump(population, open(args["save_to"], mode='wb'))
