@@ -29,7 +29,8 @@ def explicit_fit_sharing(pop: Population, minimize_fitness: bool, species_thresh
 
 def update_pop_fitness(pop, gen, fitness_func, fit_share, minimize_fitness, species_threshold):
     for ind in pop.indvs:
-        ind.fitness = np.clip(fitness_func(ind, gen), -1*(10**10), 10**10)
+        fit = fitness_func(ind, gen)
+        ind.fitness = np.clip(fit, -1*(10**10), 10**10)
         ind.original_fit = ind.fitness
     if fit_share:
         explicit_fit_sharing(pop, minimize_fitness, species_threshold)
@@ -38,7 +39,8 @@ def update_pop_fitness(pop, gen, fitness_func, fit_share, minimize_fitness, spec
 def update_pop_fitness_thread(indvs, gen, fitness_func):
     results_dict = {}
     for ind in indvs:
-        fit = np.clip(fitness_func(ind, gen), -1*(10**10), 10**10)
+        fit = fitness_func(ind, gen)
+        fit = np.clip(fit, -1*(10**10), 10**10)
         results_dict[ind.id] = fit
     return results_dict
 

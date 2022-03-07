@@ -19,7 +19,7 @@ def parse_args():
     tourney_size = 10
     selection_method = "tournament"
     n_tests = 100
-    stag_preservation = 1
+    stag_preservation = 2
     species_threshold = .7
     cpus = 4
     n_steps = 400
