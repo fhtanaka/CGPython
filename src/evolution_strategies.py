@@ -12,11 +12,11 @@ import dill
 c1 = 1
 c2 = 1
 b1 = 1
-b2 = .5
+b2 = 1
 b3 = .25
 
 alfa = 1
-beta = 2
+beta = 2.5
 
 def explicit_fit_sharing(pop: Population, minimize_fitness: bool, species_threshold: float):
     pop.separate_species(c1, c2, b1, b2, b3, species_threshold, 0)
@@ -177,7 +177,7 @@ def run(
                 if ".pkl" in save_pop:
                     save_pop = save_pop.split(".pkl")[0]
                 f = f"{save_pop}_g_{gen}.pkl"
-                dill.dump(s, open(f, mode='wb'))
+                dill.dump(pop, open(f, mode='wb'))
 
         if fit_mod*gen_best_fitness >= fit_mod*goal_fit or gen == generations:
             break
