@@ -28,7 +28,6 @@ Population.add_operation(arity=1, func=math.sin, string="SIN")
 Population.add_operation(arity=1, func=math.cos, string="COS")
 # Population.add_operation(arity=1, func=protected_exp, string="EXP")
 Population.add_operation(arity=1, func=protected_log, string="RLOG")
-Population.rng = np.random.RandomState(10)
 
 
 def generate_functions(n_tests=20):
@@ -46,7 +45,7 @@ def generate_functions(n_tests=20):
 def create_tests(n_tests, n_inputs, funcs):
     tests = []
     for _ in range(n_tests):
-        inputs = [np.random.uniform(-1, 1) for _ in range(n_inputs)]
+        inputs = [Population.rng.uniform(-1, 1) for _ in range(n_inputs)]
         responses = [f(*inputs) for f in funcs]
         tests.append((inputs, responses))
     return tests
@@ -68,6 +67,7 @@ def fitness_func(individual: Graph, gen: int, tests):
 
 def main():
     args = parse_args()
+    Population.rng = np.random.default_rng(args["seed"])
 
     inputs, funcs, tests = generate_functions(args["n_tests"])
     def fit_func(indv, gen): return fitness_func(indv, gen, tests)

@@ -1,7 +1,7 @@
-from evolution_strategies import one_plus_lambda, tournament_selection
-from population import Population
+from src.evolution_strategies import one_plus_lambda, tournament_selection
+from src.population import Population
 import numpy as np
-from graph import Graph
+from src.graph import Graph
 import cProfile
 import pstats
 

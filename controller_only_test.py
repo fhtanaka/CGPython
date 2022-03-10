@@ -25,7 +25,6 @@ Population.add_operation(arity=2, func=addition, string="x+y")
 Population.add_operation(arity=2, func=multiplication, string="x*y")
 Population.add_operation(arity=2, func=subtraction, string="x-y")
 Population.add_operation(arity=2, func=protected_div, string="*x/y")
-Population.rng = np.random.RandomState(10)
 
 node_names = ['empty', 'rigid', 'soft', 'hori', 'vert']
 
@@ -94,6 +93,7 @@ def main():
     n_steps = 400
     robot_dict = {}
     args = parse_args()
+    Population.rng = np.random.default_rng(args["seed"])
 
     controller_pop = Population(
         population_size=args["pop_size"],

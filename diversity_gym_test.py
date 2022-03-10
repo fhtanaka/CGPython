@@ -21,7 +21,6 @@ Population.add_operation(arity=2, func=addition, string="x+y")
 Population.add_operation(arity=2, func=multiplication, string="x*y")
 Population.add_operation(arity=2, func=subtraction, string="x-y")
 Population.add_operation(arity=2, func=protected_div, string="*x/y")
-Population.rng = np.random.RandomState(10)
 
 def fitness_func(individual: Graph, gen:int,  n_steps):
     env = gym.make('BipedalWalker-v3')
@@ -40,6 +39,7 @@ def fitness_func(individual: Graph, gen:int,  n_steps):
 
 def main():
     args = parse_args()
+    Population.rng = np.random.default_rng(args["seed"])
 
     def fit_func(indv, gen): return fitness_func(indv, gen, args["n_steps"])
 
@@ -53,7 +53,7 @@ def main():
     def t_select(): return tournament_selection(
         population=population,
         generations=args["max_gens"],
-        goal_fit=300,
+        goal_fit=250,
         fitness_func=fit_func,
         minimize_fitness=False,
         fit_share=args["fit_share"],

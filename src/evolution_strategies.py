@@ -16,7 +16,8 @@ b2 = 1
 b3 = .25
 
 alfa = 1
-beta = 2.5
+beta = 2
+
 
 def explicit_fit_sharing(pop: Population, minimize_fitness: bool, species_threshold: float):
     pop.separate_species(c1, c2, b1, b2, b3, species_threshold, 0)
@@ -26,6 +27,7 @@ def explicit_fit_sharing(pop: Population, minimize_fitness: bool, species_thresh
                 indv.fitness = (indv.fitness**alfa) * (len(sp.members)**beta)
             else:
                 indv.fitness = (indv.fitness**alfa) / (len(sp.members)**beta)
+
 
 def update_pop_fitness(pop, gen, fitness_func, fit_share, minimize_fitness, species_threshold):
     for ind in pop.indvs:
@@ -44,16 +46,17 @@ def update_pop_fitness_thread(indvs, gen, fitness_func):
         results_dict[ind.id] = fit
     return results_dict
 
+
 def parallel_update_pop_fitness(pop, gen, fitness_func, fit_share, minimize_fitness, species_threshold, n_workers):
     try:
         pool = ProcessPool(nodes=n_workers)
         results = pool.map(
-            update_pop_fitness_thread, 
+            update_pop_fitness_thread,
             np.array_split(pop.indvs, n_workers),
             [gen for _ in range(n_workers)],
             [fitness_func for _ in range(n_workers)]
         )
-        
+
         fitness_dict = {}
         for result_dict in results:
             for k, v in result_dict.items():
@@ -65,12 +68,13 @@ def parallel_update_pop_fitness(pop, gen, fitness_func, fit_share, minimize_fitn
 
         if fit_share:
             explicit_fit_sharing(pop, minimize_fitness, species_threshold)
-            
+
     except IOError as e:
         if e.errno == errno.EPIPE:
             print("Problem with broken pipe")
         else:
             raise(IOError)
+
 
 def print_csv(gen, champion, pop, species_threshold, fit_partition_size, csv_file):
     deltas = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
@@ -91,7 +95,7 @@ def print_csv(gen, champion, pop, species_threshold, fit_partition_size, csv_fil
 
 
 def print_report(gen, champion, pop, species_threshold, fit_partition_size):
-    deltas = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
+    _ = pop.separate_species(c1, c2, b1, b2, b3, species_threshold)
     print(f"best_in_gen_{gen}: {champion.id};\t original_fit: {champion.original_fit:.2f};\t shared_fit: {champion.fitness:.2f};\t specie: {champion.species_id};")
 
     fit_div, entropy = pop_entropy_and_fitness_diversity(pop, fit_partition_size)
@@ -128,8 +132,8 @@ def run(
     species_threshold,
     csv_file,
     fit_partition_size,
-    save_pop = None,
-    n_threads = 1,
+    save_pop=None,
+    n_threads=1,
 ):
     fit_mod = 1
     last_gen_fitness = float('-inf')
@@ -146,7 +150,6 @@ def run(
         file = open(csv_file, 'w')
         header = "gen;fitness;n_species;p_isomorphisms;unique_fitness;entropy;total_gen_markers;active_gen_markers;inactive_gen_markers;avg_delta;std_delta\n"
         file.write(header)
-
 
     for gen in range(generations+1):
         s = time.time()
@@ -166,7 +169,6 @@ def run(
         else:
             stagnation_count += 1
         last_gen_fitness = gen_best_fitness
-
 
         if csv_file is not None:
             print_csv(gen, champion, pop, species_threshold, fit_partition_size, file)
@@ -194,11 +196,10 @@ def run(
             pop.indvs.sort(key=lambda x: (x.original_fit * fit_mod, x.id))
             pop.indvs[:stag_preservation] = pop.create_individuals()[:stag_preservation]
             update_pop_fitness(pop, gen, fitness_func, False, minimize_fitness, species_threshold)
-        
+        21
         selection_function(pop)
         if report is not None and gen % report == 0:
             print(f'Gen {gen} took {round(time.time()-s, 1)}s\n')
-
     if csv_file is not None:
         file.close()
     # pop.indvs.sort(key=lambda x: (x.fitness * fit_mod, x.id))
@@ -207,9 +208,10 @@ def run(
     # print("Best Shared Fitness: {}".format(pop.indvs[-1].fitness))
     # print("Best Original Fitness: {}".format(pop.indvs[-1].original_fit))
 
+
 def tournament_selection_iteration(
-    pop: Population, 
-    minimize_fit: bool, 
+    pop: Population,
+    minimize_fit: bool,
     mutate_active_only: bool,
     mutation_rate: float,
     elitism: int,
@@ -240,15 +242,16 @@ def tournament_selection_iteration(
         tourney.sort(key=lambda x: (x.fitness * mod, x.id))
         indv = None
 
-        if pop.rng.rand() <= crossover_rate:
+        if pop.rng.random() <= crossover_rate:
             indv, _ = pop.traditional_crossover(tourney[-1], tourney[-2])
         else:
-            indv = tourney[-1].clone_graph()
+            indv = tourney[-1].clone_graph(pop.rng)
 
-        indv.probabilistic_mutation(mutation_rate, mutate_active_only)
+        indv.probabilistic_mutation(mutation_rate, mutate_active_only, rng=pop.rng)
 
         new_population.append(indv)
     pop.indvs = new_population
+
 
 def one_plus_lambda_iteration(
     pop: Population,
@@ -278,7 +281,7 @@ def one_plus_lambda_iteration(
         for parent in champions:
             parent.reset_graph_value()
             indv = parent.clone_graph()
-            indv.probabilistic_mutation(mutation_rate, mutate_active_only)
+            indv.probabilistic_mutation(mutation_rate, mutate_active_only, pop.rng)
             new_population.append(indv)
 
     pop.indvs = new_population
@@ -302,11 +305,11 @@ def one_plus_lambda(
 
     species_threshold: float = .8,
 
-    save_pop:str = None,
+    save_pop: str = None,
     n_threads=1,
 
-    csv_file = None,
-    fit_partition_size = 1,
+    csv_file=None,
+    fit_partition_size=1,
 ):
     def f(pop): return one_plus_lambda_iteration(
         pop,
@@ -355,13 +358,13 @@ def tournament_selection(
 
     species_threshold: float = .8,
 
-    save_pop:str = None,
-    n_threads = 1,
+    save_pop: str = None,
+    n_threads=1,
 
-    csv_file = None,
-    fit_partition_size = 1,
+    csv_file=None,
+    fit_partition_size=1,
 ):
-    f = lambda pop: tournament_selection_iteration(
+    def f(pop): return tournament_selection_iteration(
         pop,
         minimize_fitness,
         mutate_active_only,

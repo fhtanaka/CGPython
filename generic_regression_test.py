@@ -22,7 +22,6 @@ Population.add_operation(arity=2, func=addition, string="x+y")
 Population.add_operation(arity=2, func=multiplication, string="x*y")
 Population.add_operation(arity=2, func=subtraction, string="x-y")
 Population.add_operation(arity=2, func=protected_div, string="*x/y")
-Population.rng = np.random.RandomState(10)
 
 
 def generate_functions(n_tests=100):
@@ -65,6 +64,7 @@ def fitness_func(individual: Graph, gen: int, tests):
 
 def main():
     args = parse_args()
+    Population.rng = np.random.default_rng(args["seed"])
 
     inputs, funcs, tests = generate_functions(args["n_tests"])
     fit_func = lambda indv, gen: fitness_func(indv, gen, tests)

@@ -20,12 +20,13 @@ def parse_args():
     selection_method = "tournament"
     n_tests = 100
     stag_preservation = 2
-    species_threshold = .7
+    species_threshold = .65
     cpus = 4
-    n_steps = 400
+    n_steps = 300
     env_name = "StepsUp"
     goal_fit = 4
     fit_partition = 1
+    seed = 1997
 
     parser = argparse.ArgumentParser()
 
@@ -52,6 +53,7 @@ def parse_args():
     parser.add_argument("--mut_active", nargs="?", default=mut_active_only, help="mut_active_only") 
     parser.add_argument("--no_fit_share", nargs="?", default=fit_share, help="fit_share")
     parser.add_argument("--csv", nargs="?", default=csv_file, help="fit_share")
+    parser.add_argument("--seed", nargs="?", default=seed, help="seed")
 
     command_line_args = parser.parse_args()
 
@@ -75,6 +77,7 @@ def parse_args():
     args_dict["goal_fit"] = command_line_args.goal_fit
     args_dict["csv"] = command_line_args.csv
     args_dict["fit_partition"] = command_line_args.fit_partition
+    args_dict["seed"] = command_line_args.seed
 
     args_dict["fit_share"] = command_line_args.no_fit_share
     if args_dict["fit_share"] != True:
