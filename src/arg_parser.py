@@ -53,7 +53,7 @@ def parse_args():
     parser.add_argument("--mut_active", nargs="?", default=mut_active_only, help="mut_active_only") 
     parser.add_argument("--no_fit_share", nargs="?", default=fit_share, help="fit_share")
     parser.add_argument("--csv", nargs="?", default=csv_file, help="fit_share")
-    parser.add_argument("--seed", nargs="?", default=seed, help="seed")
+    parser.add_argument("--seed", nargs="?", default=seed, help="seed", type=int)
 
     command_line_args = parser.parse_args()
 
