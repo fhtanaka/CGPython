@@ -34,7 +34,7 @@ def fitness_func(individual: Graph, gen:int,  n_steps):
         if done:
                 break
     
-    return fitness
+    return np.clip(fitness, -1*(10**10), 10**10)
 
 
 def main():

@@ -62,7 +62,8 @@ def fitness_func(individual: Graph, gen: int, tests):
             if h == y:
                 fitness += 1
 
-    return fitness/len(tests)
+    fitness = fitness/len(tests)
+    return np.clip(fitness, -1*(10**10), 10**10)
 
 
 def main():

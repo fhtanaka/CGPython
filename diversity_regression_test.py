@@ -62,7 +62,7 @@ def fitness_func(individual: Graph, gen: int, tests):
         for h, y in zip(graph_out, expected_out):
             fitness += abs(y-h)
 
-    return fitness
+    return np.clip(fitness, -1*(10**10), 10**10)
 
 
 def main():
