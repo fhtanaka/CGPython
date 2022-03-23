@@ -7,12 +7,12 @@ def parse_args():
     # saving_to = "cache/tourney_cross_spec.pkl"
     report = None
     csv_file = None
-    pop_size = 50
+    pop_size = 24
     n_middle_nodes = 100
     max_gens = 100
     fit_share = False
     stagnation = 100
-    elitism = 2
+    elitism = 1
     mut_active_only = False
     mut_rate = .1
     crossover_rate = .9
@@ -21,15 +21,15 @@ def parse_args():
     n_tests = 100
     stag_preservation = 2
     species_threshold = .65
-    cpus = 5
-    n_steps = 300
+    cpus = 4
+    n_steps = 400
     env_name = "StepsUp"
-    goal_fit = 4
+    goal_fit = 1000000
     fit_partition = 1
     seed = 1997
 
     robot_size = 5
-    controller_pop = 10
+    controller_pop = 24
 
     parser = argparse.ArgumentParser()
 

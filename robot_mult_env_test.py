@@ -59,20 +59,15 @@ def generate_robot(g: Graph, structure):
 def calculate_reward(env: BenchmarkBase, controller: Graph, n_steps: int):
     reward = 0
     env.reset()
-    actuators = env.get_actuator_indices("robot")
     for _ in range(n_steps):
+        # env.render("screen")
         obs = get_observation(env)
-        if len(obs) != controller.n_in:
-            print("OI")
-        action_by_actuator = controller.operate(obs)
-        action = [action_by_actuator[i] for i in actuators]
-
+        action = controller.operate(obs)
         obs, r, done, _ = env.step(np.array(action))
         reward += r
 
         if done:
             return reward, True
-
     return reward, False
 
 
@@ -80,7 +75,8 @@ def get_obs_size(robot):
     temp_env = gym.make(env_names[0], body=robot)
     n = len(temp_env.get_relative_pos_obs("robot"))
     obs = 2 + 1 + n + 11 + 11
-    return obs
+    actuators = temp_env.get_actuator_indices("robot")
+    return obs, len(actuators)
 
 
 def get_observation(env: BenchmarkBase):
@@ -100,11 +96,12 @@ def get_observation(env: BenchmarkBase):
 
 def get_controller_population(robot: np.array, robot_dict: Dict[str, RobotController], args):
     robot_hash = hashable(robot)
+    n_in, n_out = get_obs_size(robot)
     if robot_hash not in robot_dict:
         controller_pop = Population(
             population_size=args["controller_pop"],
-            n_in=get_obs_size(robot),
-            n_out=args["robot_size"]**2,
+            n_in=n_in,
+            n_out=n_out,
             n_middle=args["n_middle_nodes"]
         )
         robot_dict[robot_hash] = RobotController(controller_pop)
@@ -214,7 +211,8 @@ def main():
         crossover_rate=args["crossover_rate"],
         tournament_size=args["tourney_size"],
         species_threshold=args["species_threshold"],
-        save_pop=args["save_to"],
+        csv_file=args["csv"],
+        # save_pop=args["save_to"],
         n_threads=1,
     )
 
