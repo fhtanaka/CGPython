@@ -13,7 +13,7 @@ cte = Operation(arity=1, operation=cte_op, string="x")
 class Graph:
     id_counter = itertools.count().__next__
 
-    def __init__(self, n_in: int, n_out: int, n_middle: int, available_operations: List[Operation] =[cte], initialize: bool = True, rng = np.random):
+    def __init__(self, n_in: int, n_out: int, n_middle: int, available_operations: List[Operation] =[cte], initialize: bool = True, rng = np.random.default_rng()):
         self.id: int = self.id_counter()
         self.species_id: int = -1
 
@@ -27,21 +27,20 @@ class Graph:
         self.available_operations = available_operations
         self.fitness: float = 0
         self.original_fit: float = 0
-        self.rng = rng
         
         if initialize:
             for n_id in range(self.total_nodes):
                 op_value = None
                 if n_in <= n_id < n_in + n_middle: # if it is a middle node
-                    op_value = self.rng.uniform()
+                    op_value = rng.uniform()
 
                 new_node = Node(n_id, op_value, active=False)
 
                 if n_in + n_middle <= n_id: # if it is an output node add a single input
-                    new_node.add_inputs([self.rng.uniform()])
+                    new_node.add_inputs([rng.uniform()])
                 elif n_in <= n_id:
                     op = self.decode_operation(op_value)
-                    new_node.add_inputs([self.rng.uniform() for _ in range(op.arity)])
+                    new_node.add_inputs([rng.uniform() for _ in range(op.arity)])
                 
                 self.nodes[new_node.id] = new_node
 
@@ -87,7 +86,7 @@ class Graph:
         operation = self.decode_operation(node.operation)
         
         if len(inputs) != operation.arity:
-            print("sInput size does not match the arity of the operation")
+            print("Input size does not match the arity of the operation")
 
         node.value = operation(*inputs)
 
@@ -96,45 +95,47 @@ class Graph:
     def nodes_eligible_for_mutation(self, only_active):
         return [n for n in self.nodes[self.n_in:] if not only_active or n.active]
 
-    def probabilistic_mutation(self, percentage, only_active = False):
+    def probabilistic_mutation(self, percentage, only_active=False, rng=None):
         possible_nodes = self.nodes_eligible_for_mutation(only_active)
         for n in possible_nodes:
             #mutating the connections
             for k, v in enumerate(n.inputs):
-                n.inputs[k] = self.rng.uniform() if self.rng.rand() <= percentage else v
+                n.inputs[k] = v
+                if rng.random() < percentage:
+                    n.inputs[k] = rng.uniform()
             # mutating the operation
-            if self.rng.rand() <= percentage:
-                self.mutate_operation(n)
+            if rng.random() < percentage:
+                self.mutate_operation(n, rng)
 
     # def point_mutation(self, n_nodes, only_active = False):
     #     possible_nodes = self.nodes_eligible_for_mutation(only_active)
-    #     nodes_to_mutate = self.rng.choice(possible_nodes, n_nodes, replace=False)
+    #     nodes_to_mutate = rng.choice(possible_nodes, n_nodes, replace=False)
     #     for n_id in nodes_to_mutate:
     #         self.mutate_node_gene(n_id)
 
-    def mutate_operation(self, node):
+    def mutate_operation(self, node, rng=np.random.default_rng()):
         if node.operation is None:
             return
 
         old_op = self.decode_operation(node.operation)
 
-        node.operation = self.rng.uniform()
+        node.operation = rng.uniform()
         new_op = self.decode_operation(node.operation)
 
         # in this case we should add connections
         if new_op.arity > old_op.arity:
-            new_inputs = [self.rng.uniform() for _ in range(new_op.arity - old_op.arity)]
+            new_inputs = [rng.uniform() for _ in range(new_op.arity - old_op.arity)]
             node.add_inputs(new_inputs)
 
         # in this case we should remove connections    
         elif new_op.arity < old_op.arity:
             qtd = old_op.arity - new_op.arity
-            inputts_to_remove = self.rng.choice(node.inputs, qtd, replace=False)
+            inputts_to_remove = rng.choice(node.inputs, qtd, replace=False)
             node.remove_inputs(inputts_to_remove)
             
     
-    def clone_graph(self):
-        clone = Graph(self.n_in, self.n_out, self.n_middle, self.available_operations, initialize=False, rng=self.rng)
+    def clone_graph(self, rng = np.random.default_rng()):
+        clone = Graph(self.n_in, self.n_out, self.n_middle, self.available_operations, initialize=False, rng=rng)
         clone.species_id = self.species_id
         clone.fitness = self.fitness
         clone.original_fit = self.original_fit
@@ -157,9 +158,9 @@ class Graph:
             self.activate_node(i)
 
     # this function is mostly for testing purposes
-    def _add_node(self, n_id, value=None, operation=None):
+    def _add_node(self, n_id, value=None, operation=None, rng=np.random.default_rng()):
         if operation == None and value == None:
-            operation = self.rng.uniform()
+            operation = rng.uniform()
         new_node = Node(n_id, operation, value)
         self.nodes[new_node.id] = new_node
         return new_node.id

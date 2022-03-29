@@ -15,7 +15,7 @@ def order_by_fitness(fitness_modifier):
 
 class Population:
 
-    rng = np.random
+    rng: np.random.Generator = np.random.default_rng()
     species_id_count = itertools.count().__next__
 
     operations: List[Operation] = []
@@ -45,7 +45,7 @@ class Population:
     def create_individuals(self):
         indvs: List[Graph] = []
         for _ in range(self.population_size): 
-            g = Graph(self.n_in, self.n_out, self.n_middle, self.operations)
+            g = Graph(self.n_in, self.n_out, self.n_middle, self.operations, rng=self.rng)
             indvs.append(g)
         return indvs
     
@@ -61,7 +61,7 @@ class Population:
         return self.operations[op_index]
 
     def traditional_crossover(self, parent1: Graph, parent2: Graph):
-        r = parent1.rng.uniform() # TODO: change this to not depend on only one parent
+        r = self.rng.uniform() # TODO: change this to not depend on only one parent
         child1 = self.graph_crossover(parent1, parent2, r)
         child2 = self.graph_crossover(parent1, parent2, 1-r)
 
@@ -73,11 +73,11 @@ class Population:
         for n_id in range(self.total_genes):
             n1 = parent1.nodes[n_id]
             n2 = parent2.nodes[n_id]
-            child.nodes[n_id] = self.node_crossover(r, n_id, child.rng, n1, n2)
+            child.nodes[n_id] = self.node_crossover(r, n_id, n1, n2)
 
         return child
 
-    def node_crossover(self, r, n_id, rng, n1: Node, n2: Node):
+    def node_crossover(self, r, n_id, n1: Node, n2: Node):
         inputs = []
         for g1, g2 in itertools.zip_longest(n1.inputs, n2.inputs):
             if g1 == None:
@@ -94,7 +94,7 @@ class Population:
 
             if len(inputs) < op.arity: # Adding more inputs if necessary
                 for _ in range(op.arity-len(inputs)):
-                    inputs.append(rng.uniform())
+                    inputs.append(self.rng.uniform())
             elif len(inputs) > op.arity: # removing inputs if necessary
                 inputs = inputs[:op.arity]
 

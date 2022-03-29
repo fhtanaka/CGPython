@@ -4,8 +4,7 @@ from src.graph import Graph
 from src.evolution_strategies import one_plus_lambda, tournament_selection
 from src.population import Population
 from src.arg_parser import parse_args
-import cProfile
-import pstats
+import gym
 
 def addition(x, y): return x+y
 def multiplication(x, y): return x*y
@@ -23,64 +22,40 @@ Population.add_operation(arity=2, func=multiplication, string="x*y")
 Population.add_operation(arity=2, func=subtraction, string="x-y")
 Population.add_operation(arity=2, func=protected_div, string="*x/y")
 
-
-def generate_functions(n_tests=100):
-    n_inputs = 2
-
-    def f1(x, y): return x**6 - 2*x**4 + x**2
-    def f2(x, y): return x+y
-    def f3(x, y): return y**4 - 2*y**3 + 5*x
-    # def f4(x, y): return x**6 - 2*y*x**4 + y**2
-
-    funcs = [f1, f2, f3]
-
-    tests = create_tests(n_tests, n_inputs, funcs)
-
-    return n_inputs, funcs, tests
-
-
-def create_tests(n_tests, n_inputs, funcs):
-    tests = []
-    for _ in range(n_tests):
-        inputs = [np.random.uniform(-10, +10) for _ in range(n_inputs)]
-        responses = [f(*inputs) for f in funcs]
-        tests.append((inputs, responses))
-    return tests
-
-
-def fitness_func(individual: Graph, gen: int, tests):
+def fitness_func(individual: Graph, gen:int,  n_steps):
+    env = gym.make('BipedalWalker-v3')
     fitness = 0
-    for t in tests:
-        inputs = t[0]
-        expected_out = t[1]
 
-        graph_out = individual.operate(inputs)
-
-        for h, y in zip(graph_out, expected_out):
-            fitness += abs(y-h)
+    observation = env.reset()
+    for t in range(n_steps):
+        action = individual.operate(observation)
+        observation, reward, done, info = env.step(action)
+        fitness += reward
+        if done:
+                break
     
     return np.clip(fitness, -1*(10**10), 10**10)
+
 
 def main():
     args = parse_args()
     Population.rng = np.random.default_rng(args["seed"])
 
-    inputs, funcs, tests = generate_functions(args["n_tests"])
-    fit_func = lambda indv, gen: fitness_func(indv, gen, tests)
-    
+    def fit_func(indv, gen): return fitness_func(indv, gen, args["n_steps"])
+
     population = Population(
-        population_size = args["pop_size"],
-        n_in = inputs,
-        n_out = len(funcs),
+        population_size=args["pop_size"],
+        n_in=24,
+        n_out=4,
         n_middle=args["n_middle_nodes"]
     )
 
     def t_select(): return tournament_selection(
         population=population,
         generations=args["max_gens"],
-        goal_fit=.1,
+        goal_fit=250,
         fitness_func=fit_func,
-        minimize_fitness=True,
+        minimize_fitness=False,
         fit_share=args["fit_share"],
         stagnation=args["stagnation"],
         stag_preservation=args["stag_preservation"],
@@ -119,15 +94,16 @@ def main():
     if args["selection_method"] == "lambda":
         exec_func = p_lambda
 
-    profile = cProfile.Profile()
-    profile.runcall(exec_func)
-    ps = pstats.Stats(profile)
-    ps.print_stats()
-    print()
+    # profile = cProfile.Profile()
+    # profile.runcall(exec_func)
+    # ps = pstats.Stats(profile)
+    # ps.print_stats()
+    # print()
+    exec_func()
 
-
-    if args["save_to"] is not None:    
+    if args["save_to"] is not None:
         dill.dump(population, open(args["save_to"], mode='wb'))
+
 
 if __name__ == "__main__":
     main()

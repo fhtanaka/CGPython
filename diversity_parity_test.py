@@ -18,7 +18,6 @@ Population.add_operation(arity=2, func=bool_and, string="AND")
 Population.add_operation(arity=2, func=bool_or, string="OR")
 Population.add_operation(arity=2, func=bool_nand, string="NAND")
 Population.add_operation(arity=2, func=bool_nor, string="NOR")
-Population.rng = np.random.RandomState(10)
 
 
 def eleven_multiplexer(arr):
@@ -63,12 +62,14 @@ def fitness_func(individual: Graph, gen: int, tests):
             if h == y:
                 fitness += 1
 
-    return fitness/len(tests)
+    fitness = fitness/len(tests)
+    return np.clip(fitness, -1*(10**10), 10**10)
 
 
 def main():
     n = 5
     args = parse_args()
+    Population.rng = np.random.default_rng(args["seed"])
 
     tests = create_tests(n)
     def fit_func(indv, gen): return fitness_func(indv, gen, tests)
