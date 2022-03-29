@@ -107,12 +107,6 @@ class Graph:
             if rng.random() < percentage:
                 self.mutate_operation(n, rng)
 
-    # def point_mutation(self, n_nodes, only_active = False):
-    #     possible_nodes = self.nodes_eligible_for_mutation(only_active)
-    #     nodes_to_mutate = rng.choice(possible_nodes, n_nodes, replace=False)
-    #     for n_id in nodes_to_mutate:
-    #         self.mutate_node_gene(n_id)
-
     def mutate_operation(self, node, rng=np.random.default_rng()):
         if node.operation is None:
             return
@@ -164,3 +158,13 @@ class Graph:
         new_node = Node(n_id, operation, value)
         self.nodes[new_node.id] = new_node
         return new_node.id
+
+    def crossover(self, second_parent, ratio: float, rng=np.random.default_rng()):
+        child = Graph(self.n_in, self.n_out, self.n_middle, self.available_operations, initialize=False)
+
+        for n_id in range(self.total_nodes):
+            n1 = self.nodes[n_id]
+            n2 = second_parent.nodes[n_id]
+            child.nodes[n_id] = n1.crossover(ratio, n_id, n2, self.available_operations, rng)
+
+        return child

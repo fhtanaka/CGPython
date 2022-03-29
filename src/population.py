@@ -61,9 +61,13 @@ class Population:
         return self.operations[op_index]
 
     def traditional_crossover(self, parent1: Graph, parent2: Graph):
-        r = self.rng.uniform() # TODO: change this to not depend on only one parent
+        r = self.rng.uniform()
+
         child1 = self.graph_crossover(parent1, parent2, r)
         child2 = self.graph_crossover(parent1, parent2, 1-r)
+
+        # child1 = parent1.crossover(parent2, r, self.rng)
+        # child2 = parent2.crossover(parent1, 1-r, self.rng)
 
         return (child1, child2)
 

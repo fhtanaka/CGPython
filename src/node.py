@@ -1,5 +1,13 @@
 import itertools
+import numpy as np
 from typing import Any, List
+
+
+def get_operation(op_value, available_operations):
+    if op_value == None:
+        return None
+    op_index = int(op_value*len(available_operations))
+    return available_operations[op_index]
 
 class Node:
     id_counter = itertools.count().__next__
@@ -23,3 +31,29 @@ class Node:
 
     def decode_inputs(self):
         return [int(x*self.id) for x in self.inputs]
+
+    def crossover(self, r, n_id, second_parent, available_operations, rng=np.random.default_rng()):
+        inputs = []
+        for g1, g2 in itertools.zip_longest(self.inputs, second_parent.inputs):
+            if g1 == None:
+                inputs.append(g2)
+            elif g2 == None:
+                inputs.append(g1)
+            else:
+                inputs.append(((1 - r) * g1) + (r * g2))
+
+        op_value = None
+        if self.operation != None and second_parent.operation != None:
+            op_value = ((1 - r) * self.operation) + (r * second_parent.operation)
+            op = get_operation(op_value, available_operations)
+
+            if len(inputs) < op.arity:  # Adding more inputs if necessary
+                for _ in range(op.arity-len(inputs)):
+                    inputs.append(rng.uniform())
+            elif len(inputs) > op.arity:  # removing inputs if necessary
+                inputs = inputs[:op.arity]
+
+        child_node = Node(n_id, op_value)
+        child_node.add_inputs(inputs)
+
+        return child_node
