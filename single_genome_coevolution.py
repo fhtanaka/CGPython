@@ -140,7 +140,7 @@ def main():
         tournament_size=args["tourney_size"],
         species_threshold=args["species_threshold"],
         save_pop=args["save_to"],
-        n_threads=1,
+        n_threads=args["n_threads"],
         csv_file=args["csv"],
     )
 
