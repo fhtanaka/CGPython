@@ -98,7 +98,7 @@ def get_controller_population(robot: np.array, robot_dict: Dict[str, RobotContro
     if robot_hash not in robot_dict:
         controller_pop = Population(
             population_size=20,
-            n_in=15,
+            n_in=get_obs_size(),
             n_out=25,
             n_middle=args["n_middle_nodes"]
         )
@@ -208,7 +208,7 @@ def main():
         tournament_size=args["tourney_size"],
         species_threshold=args["species_threshold"],
         save_pop=args["save_to"],
-        n_threads=args["n_threads"],
+        n_threads=1,
         csv_file=args["csv"]
     )
 
