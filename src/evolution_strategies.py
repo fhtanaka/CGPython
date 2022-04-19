@@ -84,11 +84,8 @@ def parallel_update_pop_fitness(pop, gen, fitness_func, n_workers):
             ind.fitness = fitness_dict[ind.id]
             ind.original_fit = ind.fitness
 
-    except IOError as e:
-        if e.errno == errno.EPIPE:
-            print("Problem with broken pipe")
-        else:
-            raise(IOError)
+    except BrokenPipeError as e:
+        print("Problem with broken pipe")
 
 
 def print_csv(gen, champion, pop, species_threshold, fit_partition_size, csv_file):
