@@ -93,8 +93,6 @@ def get_observation(env):
 def structure_fitness_func(individual: Graph, gen: int, structure: Tuple, args):
 
     robot = generate_robot(individual, structure)
-    print(robot)
-    print(eval_genome_constraint(robot))
     if not eval_genome_constraint(robot):
         return -10000
     connections = get_full_connectivity(robot)
