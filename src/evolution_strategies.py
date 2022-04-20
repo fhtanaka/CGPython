@@ -201,7 +201,10 @@ def run(
                 break
             pop.indvs.sort(key=lambda x: (x.original_fit * fit_mod, x.id))
             pop.indvs[:stag_preservation] = pop.create_individuals()[:stag_preservation]
-            update_pop_fitness(pop, gen, fitness_func)
+            if n_threads > 1:
+                parallel_update_pop_fitness(pop, gen, fitness_func, n_threads)
+            else:
+                update_pop_fitness(pop, gen, fitness_func)
 
         selection_function(pop)
         if report is not None and gen % report == 0:
