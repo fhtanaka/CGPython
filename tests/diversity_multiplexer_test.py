@@ -1,59 +1,89 @@
 import numpy as np
 import dill
+import math
+import sys
+sys.path.append('../')
+sys.path.append('./')
 from src.graph import Graph
 from src.evolution_strategies import one_plus_lambda, tournament_selection
 from src.population import Population
 from src.arg_parser import parse_args
-import gym
+import cProfile
+import pstats
 
-def addition(x, y): return x+y
-def multiplication(x, y): return x*y
-def subtraction(x, y): return x-y
-def constant(x): return x
-def protected_div(x, y): return 1 if y == 0 else x/y
-def increment(x): return x+1
-def invert(x): return -x
 
-Population.add_operation(arity=1, func=constant, string="x")
-Population.add_operation(arity=1, func=increment, string="x+1")
-Population.add_operation(arity=1, func=invert, string="-x")
-Population.add_operation(arity=2, func=addition, string="x+y")
-Population.add_operation(arity=2, func=multiplication, string="x*y")
-Population.add_operation(arity=2, func=subtraction, string="x-y")
-Population.add_operation(arity=2, func=protected_div, string="*x/y")
+def bool_if(x, y, z): return x if z else y
+def bool_and(x, y): return x and y
+def bool_or(x, y): return x or y
+def bool_not(x): return not x
 
-def fitness_func(individual: Graph, gen:int,  n_steps):
-    env = gym.make('BipedalWalker-v3')
+
+Population.add_operation(arity=2, func=bool_and, string="AND")
+Population.add_operation(arity=2, func=bool_or, string="OR")
+Population.add_operation(arity=1, func=bool_not, string="NOT")
+Population.add_operation(arity=3, func=bool_if, string="IF")
+
+
+def eleven_multiplexer(arr):
+    if len(arr) != 11:
+        print("AAAAAAAAAAAAAAAAAAAAAAA")
+        raise 
+    d = arr[0:8]
+    a = arr[8:11]
+    index = (int(a[0]) * 4) + (int(a[1]) * 2) + (int(a[2]) * 1)
+    if d[index] == "1":
+        return True
+    return False
+
+
+def create_tests():
+    tests = []
+
+    for i in range(1024):
+        base_2_v = bin(i).replace("0b", "").zfill(11)
+        input_arr = []
+        for c in base_2_v:
+            inp = True if c == "1" else False
+            input_arr.append(inp)
+        response = eleven_multiplexer(base_2_v)
+        tests.append((input_arr, [response]))
+    return tests
+
+
+def fitness_func(individual: Graph, gen: int, tests):
     fitness = 0
+    for t in tests:
+        inputs = t[0]
+        expected_out = t[1]
 
-    observation = env.reset()
-    for t in range(n_steps):
-        action = individual.operate(observation)
-        observation, reward, done, info = env.step(action)
-        fitness += reward
-        if done:
-                break
-    
-    return np.clip(fitness, -1*(10**10), 10**10)
+        graph_out = individual.operate(inputs)
+
+        for h, y in zip(graph_out, expected_out):
+            if h == y:
+                fitness += 1
+
+    fitness = fitness/len(tests)
+    return np.clip(fitness, -1*(10**10), 10**10) 
 
 
 def main():
     args = parse_args()
     Population.rng = np.random.default_rng(args["seed"])
 
-    def fit_func(indv, gen): return fitness_func(indv, gen, args["n_steps"])
+    tests = create_tests()
+    def fit_func(indv, gen): return fitness_func(indv, gen, tests)
 
     population = Population(
         population_size=args["pop_size"],
-        n_in=24,
-        n_out=4,
+        n_in=11,
+        n_out=1,
         n_middle=args["n_middle_nodes"]
     )
 
     def t_select(): return tournament_selection(
         population=population,
         generations=args["max_gens"],
-        goal_fit=250,
+        goal_fit=1,
         fitness_func=fit_func,
         minimize_fitness=False,
         fit_share=args["fit_share"],
@@ -74,9 +104,9 @@ def main():
     def p_lambda(): return one_plus_lambda(
         population=population,
         generations=args["max_gens"],
-        goal_fit=.1,
+        goal_fit=1,
         fitness_func=fit_func,
-        minimize_fitness=True,
+        minimize_fitness=False,
         fit_share=args["fit_share"],
         stagnation=args["stagnation"],
         stag_preservation=args["stag_preservation"],

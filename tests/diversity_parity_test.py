@@ -1,6 +1,9 @@
 import numpy as np
 import dill
 import math
+import sys
+sys.path.append('../')
+sys.path.append('./')
 from src.graph import Graph
 from src.evolution_strategies import one_plus_lambda, tournament_selection
 from src.population import Population

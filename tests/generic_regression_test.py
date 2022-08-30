@@ -1,12 +1,15 @@
 import numpy as np
 import dill
-import math
+import sys
+sys.path.append('../')
+sys.path.append('./')
 from src.graph import Graph
 from src.evolution_strategies import one_plus_lambda, tournament_selection
 from src.population import Population
 from src.arg_parser import parse_args
 import cProfile
 import pstats
+
 def addition(x, y): return x+y
 def multiplication(x, y): return x*y
 def subtraction(x, y): return x-y
@@ -48,7 +51,7 @@ def create_tests(n_tests, n_inputs, funcs):
     return tests
 
 
-def fitness_func(individual: Graph, gen:int,  tests):
+def fitness_func(individual: Graph, gen: int, tests):
     fitness = 0
     for t in tests:
         inputs = t[0]
@@ -61,18 +64,17 @@ def fitness_func(individual: Graph, gen:int,  tests):
     
     return np.clip(fitness, -1*(10**10), 10**10)
 
-
 def main():
     args = parse_args()
     Population.rng = np.random.default_rng(args["seed"])
 
     inputs, funcs, tests = generate_functions(args["n_tests"])
-    def fit_func(indv, gen): return fitness_func(indv, gen, tests)
-
+    fit_func = lambda indv, gen: fitness_func(indv, gen, tests)
+    
     population = Population(
-        population_size=args["pop_size"],
-        n_in=inputs,
-        n_out=len(funcs),
+        population_size = args["pop_size"],
+        n_in = inputs,
+        n_out = len(funcs),
         n_middle=args["n_middle_nodes"]
     )
 
@@ -120,16 +122,15 @@ def main():
     if args["selection_method"] == "lambda":
         exec_func = p_lambda
 
-    # profile = cProfile.Profile()
-    # profile.runcall(exec_func)
-    # ps = pstats.Stats(profile)
-    # ps.print_stats()
-    # print()
-    exec_func()
+    profile = cProfile.Profile()
+    profile.runcall(exec_func)
+    ps = pstats.Stats(profile)
+    ps.print_stats()
+    print()
 
-    if args["save_to"] is not None:
+
+    if args["save_to"] is not None:    
         dill.dump(population, open(args["save_to"], mode='wb'))
-
 
 if __name__ == "__main__":
     main()

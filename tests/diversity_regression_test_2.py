@@ -1,41 +1,41 @@
 import numpy as np
 import dill
 import math
+import sys
+sys.path.append('../')
+sys.path.append('./')
 from src.graph import Graph
 from src.evolution_strategies import one_plus_lambda, tournament_selection
 from src.population import Population
 from src.arg_parser import parse_args
 import cProfile
 import pstats
-
-
 def addition(x, y): return x+y
 def multiplication(x, y): return x*y
 def subtraction(x, y): return x-y
 def constant(x): return x
 def protected_div(x, y): return 1 if y == 0 else x/y
-def protected_log(x): return 0 if x <= 0.01 else math.log(x)
 def increment(x): return x+1
 def invert(x): return -x
-def protected_exp(x): return 10**10 if x > 24 else math.exp(x)
+
+Population.add_operation(arity=1, func=constant, string="x")
+Population.add_operation(arity=1, func=increment, string="x+1")
+Population.add_operation(arity=1, func=invert, string="-x")
+Population.add_operation(arity=2, func=addition, string="x+y")
+Population.add_operation(arity=2, func=multiplication, string="x*y")
+Population.add_operation(arity=2, func=subtraction, string="x-y")
+Population.add_operation(arity=2, func=protected_div, string="*x/y")
 
 
-Population.add_operation(arity=2, func=addition, string="+")
-Population.add_operation(arity=2, func=multiplication, string="*")
-Population.add_operation(arity=2, func=subtraction, string="-")
-Population.add_operation(arity=2, func=protected_div, string="/")
-Population.add_operation(arity=1, func=math.sin, string="SIN")
-Population.add_operation(arity=1, func=math.cos, string="COS")
-# Population.add_operation(arity=1, func=protected_exp, string="EXP")
-Population.add_operation(arity=1, func=protected_log, string="RLOG")
+def generate_functions(n_tests=100):
+    n_inputs = 2
 
+    def f1(x, y): return x**6 - 2*x**4 + x**2
+    def f2(x, y): return x+y
+    def f3(x, y): return y**4 - 2*y**3 + 5*x
+    # def f4(x, y): return x**6 - 2*y*x**4 + y**2
 
-def generate_functions(n_tests=20):
-    n_inputs = 1
-
-    def f1(x): return 4*x**4 + 3*x**3 + 2*x**2 + x
-
-    funcs = [f1]
+    funcs = [f1, f2, f3]
 
     tests = create_tests(n_tests, n_inputs, funcs)
 
@@ -45,13 +45,13 @@ def generate_functions(n_tests=20):
 def create_tests(n_tests, n_inputs, funcs):
     tests = []
     for _ in range(n_tests):
-        inputs = [Population.rng.uniform(-1, 1) for _ in range(n_inputs)]
+        inputs = [np.random.uniform(-10, +10) for _ in range(n_inputs)]
         responses = [f(*inputs) for f in funcs]
         tests.append((inputs, responses))
     return tests
 
 
-def fitness_func(individual: Graph, gen: int, tests):
+def fitness_func(individual: Graph, gen:int,  tests):
     fitness = 0
     for t in tests:
         inputs = t[0]
@@ -61,7 +61,7 @@ def fitness_func(individual: Graph, gen: int, tests):
 
         for h, y in zip(graph_out, expected_out):
             fitness += abs(y-h)
-
+    
     return np.clip(fitness, -1*(10**10), 10**10)
 
 

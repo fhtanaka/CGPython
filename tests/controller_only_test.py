@@ -3,6 +3,9 @@ from evogym.envs import WalkingFlat
 from typing import Tuple
 import numpy as np
 import dill
+import sys
+sys.path.append('../')
+sys.path.append('./')
 from src.graph import Graph
 from src.evolution_strategies import tournament_selection
 from src.population import Population

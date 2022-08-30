@@ -1,49 +1,54 @@
 import numpy as np
 import dill
 import math
+import sys
+sys.path.append('../')
+sys.path.append('./')
+from src.arg_parser import parse_args
 from src.graph import Graph
 from src.evolution_strategies import one_plus_lambda, tournament_selection
 from src.population import Population
-from src.arg_parser import parse_args
-import cProfile
-import pstats
 
 
-def bool_if(x, y, z): return x if z else y
-def bool_and(x, y): return x and y
-def bool_or(x, y): return x or y
-def bool_not(x): return not x
+def addition(x, y): return x+y
+def multiplication(x, y): return x*y
+def subtraction(x, y): return x-y
+def constant(x): return x
+def protected_div(x, y): return 1 if y == 0 else x/y
+def protected_log(x): return 0 if x <= 0.01 else math.log(x)
+def increment(x): return x+1
+def invert(x): return -x
+def protected_exp(x): return 10**10 if x > 24 else math.exp(x)
 
 
-Population.add_operation(arity=2, func=bool_and, string="AND")
-Population.add_operation(arity=2, func=bool_or, string="OR")
-Population.add_operation(arity=1, func=bool_not, string="NOT")
-Population.add_operation(arity=3, func=bool_if, string="IF")
+Population.add_operation(arity=2, func=addition, string="+")
+Population.add_operation(arity=2, func=multiplication, string="*")
+Population.add_operation(arity=2, func=subtraction, string="-")
+Population.add_operation(arity=2, func=protected_div, string="/")
+Population.add_operation(arity=1, func=math.sin, string="SIN")
+Population.add_operation(arity=1, func=math.cos, string="COS")
+# Population.add_operation(arity=1, func=protected_exp, string="EXP")
+Population.add_operation(arity=1, func=protected_log, string="RLOG")
 
 
-def eleven_multiplexer(arr):
-    if len(arr) != 11:
-        print("AAAAAAAAAAAAAAAAAAAAAAA")
-        raise 
-    d = arr[0:8]
-    a = arr[8:11]
-    index = (int(a[0]) * 4) + (int(a[1]) * 2) + (int(a[2]) * 1)
-    if d[index] == "1":
-        return True
-    return False
+def generate_functions(n_tests=20):
+    n_inputs = 1
+
+    def f1(x): return 4*x**4 + 3*x**3 + 2*x**2 + x
+
+    funcs = [f1]
+
+    tests = create_tests(n_tests, n_inputs, funcs)
+
+    return n_inputs, funcs, tests
 
 
-def create_tests():
+def create_tests(n_tests, n_inputs, funcs):
     tests = []
-
-    for i in range(1024):
-        base_2_v = bin(i).replace("0b", "").zfill(11)
-        input_arr = []
-        for c in base_2_v:
-            inp = True if c == "1" else False
-            input_arr.append(inp)
-        response = eleven_multiplexer(base_2_v)
-        tests.append((input_arr, [response]))
+    for _ in range(n_tests):
+        inputs = [Population.rng.uniform(-1, 1) for _ in range(n_inputs)]
+        responses = [f(*inputs) for f in funcs]
+        tests.append((inputs, responses))
     return tests
 
 
@@ -56,33 +61,31 @@ def fitness_func(individual: Graph, gen: int, tests):
         graph_out = individual.operate(inputs)
 
         for h, y in zip(graph_out, expected_out):
-            if h == y:
-                fitness += 1
+            fitness += abs(y-h)
 
-    fitness = fitness/len(tests)
-    return np.clip(fitness, -1*(10**10), 10**10) 
+    return np.clip(fitness, -1*(10**10), 10**10)
 
 
 def main():
     args = parse_args()
     Population.rng = np.random.default_rng(args["seed"])
 
-    tests = create_tests()
+    inputs, funcs, tests = generate_functions(args["n_tests"])
     def fit_func(indv, gen): return fitness_func(indv, gen, tests)
 
     population = Population(
         population_size=args["pop_size"],
-        n_in=11,
-        n_out=1,
+        n_in=inputs,
+        n_out=len(funcs),
         n_middle=args["n_middle_nodes"]
     )
 
     def t_select(): return tournament_selection(
         population=population,
         generations=args["max_gens"],
-        goal_fit=1,
+        goal_fit=.1,
         fitness_func=fit_func,
-        minimize_fitness=False,
+        minimize_fitness=True,
         fit_share=args["fit_share"],
         stagnation=args["stagnation"],
         stag_preservation=args["stag_preservation"],
@@ -101,9 +104,9 @@ def main():
     def p_lambda(): return one_plus_lambda(
         population=population,
         generations=args["max_gens"],
-        goal_fit=1,
+        goal_fit=.1,
         fitness_func=fit_func,
-        minimize_fitness=False,
+        minimize_fitness=True,
         fit_share=args["fit_share"],
         stagnation=args["stagnation"],
         stag_preservation=args["stag_preservation"],
